@@ -21,6 +21,9 @@ RUN pnpm install --no-frozen-lockfile
 COPY packages/ ./packages/
 COPY apps/api/ ./apps/api/
 
+# Build shared package first
+RUN pnpm --filter shared build
+
 # Generate Prisma client
 RUN pnpm --filter database generate
 
