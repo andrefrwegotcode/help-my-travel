@@ -1,0 +1,72 @@
+{
+  "expo": {
+    "name": "Help My Travel",
+    "slug": "helpmytravel",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "helpmytravel",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FF6B35"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.helpmytravel.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Help My Travel uses your location to find nearby restaurants.",
+        "NSLocationAlwaysUsageDescription": "Help My Travel uses your location to find nearby restaurants.",
+        "NSCameraUsageDescription": "Help My Travel needs camera access to upload restaurant photos.",
+        "NSPhotoLibraryUsageDescription": "Help My Travel needs photo library access to upload restaurant photos."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FF6B35"
+      },
+      "package": "com.helpmytravel.app",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-location",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Help My Travel to access your camera."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Help My Travel to access your photos."
+        }
+      ],
+      "expo-font",
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "YOUR_EAS_PROJECT_ID"
+      },
+      "apiUrl": "http://192.168.1.102:3001/api/v1"
+    }
+  }
+}

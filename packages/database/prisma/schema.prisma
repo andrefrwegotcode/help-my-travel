@@ -1,0 +1,125 @@
+// Help My Travel — Prisma Schema
+// Banco: PostgreSQL 16
+// Nota: Restaurantes NÃO são armazenados aqui.
+//       Vêm do Google Places API em tempo real.
+//       Apenas dados gerados pelos usuários são persistidos.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ====================
+// ENUMS
+// ====================
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum MenuSource {
+  WEBSITE
+  GOOGLE
+  OTHER
+}
+
+// ====================
+// MODELS
+// ====================
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String? // null quando autenticou via Google
+  googleId  String?  @unique
+  language  String   @default("en") // código ISO: en, pt, es, fr, de, it...
+  avatar    String? // URL do avatar
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reviews        Review[]
+  photos         Photo[]
+  passwordResets PasswordReset[]
+
+  @@map("users")
+}
+
+// Cache de cardápios scrapeados e traduzidos.
+// Chave única: placeId (Google) + idioma do usuário.
+// Expira após 24h (campo expiresAt).
+model MenuCache {
+  id         String     @id @default(cuid())
+  placeId    String // Google Place ID
+  language   String // código ISO do idioma
+  rawText    String     @db.Text // texto bruto extraído (pré-tradução)
+  items      Json // MenuItem[] parseado e traduzido
+  source     MenuSource
+  sourceUrl  String? // URL de onde foi extraído
+  fetchedAt  DateTime   @default(now())
+  expiresAt  DateTime
+
+  @@unique([placeId, language])
+  @@index([placeId])
+  @@index([expiresAt])
+  @@map("menu_cache")
+}
+
+// Avaliações de restaurantes feitas por usuários do app.
+// placeId é o Google Place ID — não é FK pois o restaurante
+// não existe como entidade no banco.
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  placeId   String // Google Place ID
+  placeName String // denormalizado para facilitar exibição
+  rating    Int // 1-5
+  comment   String?  @db.Text
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([placeId])
+  @@index([userId])
+  @@map("reviews")
+}
+
+// Fotos de restaurantes enviadas por usuários do app.
+model Photo {
+  id        String   @id @default(cuid())
+  userId    String
+  placeId   String // Google Place ID
+  placeName String // denormalizado
+  url       String // URL do arquivo (local ou S3)
+  caption   String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([placeId])
+  @@index([userId])
+  @@map("photos")
+}
+
+// Tokens para recuperação de senha via email.
+model PasswordReset {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique // token único enviado por email
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@map("password_resets")
+}

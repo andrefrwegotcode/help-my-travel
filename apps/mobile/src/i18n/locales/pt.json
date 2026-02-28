@@ -1,0 +1,109 @@
+{
+  "common": {
+    "loading": "Carregando...",
+    "error": "Ocorreu um erro",
+    "retry": "Tentar novamente",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Salvar",
+    "delete": "Excluir",
+    "back": "Voltar",
+    "next": "Próximo",
+    "done": "Concluído"
+  },
+  "auth": {
+    "login": "Entrar",
+    "register": "Cadastrar",
+    "logout": "Sair",
+    "email": "E-mail",
+    "password": "Senha",
+    "name": "Nome completo",
+    "forgotPassword": "Esqueceu a senha?",
+    "resetPassword": "Redefinir Senha",
+    "noAccount": "Não tem uma conta?",
+    "hasAccount": "Já tem uma conta?",
+    "signInWithGoogle": "Continuar com Google",
+    "sendResetLink": "Enviar link de redefinição",
+    "resetEmailSent": "Se o e-mail existir, um link de redefinição foi enviado.",
+    "welcomeBack": "Bem-vindo de volta!",
+    "createAccount": "Crie sua conta"
+  },
+  "map": {
+    "title": "Restaurantes Próximos",
+    "searchAddress": "Buscar por endereço...",
+    "useMyLocation": "Usar minha localização",
+    "radius": "Raio",
+    "km": "km",
+    "noRestaurants": "Nenhum restaurante encontrado nessa área",
+    "searchingNearby": "Buscando próximos...",
+    "viewList": "Ver Lista",
+    "viewMap": "Ver Mapa"
+  },
+  "restaurant": {
+    "details": "Detalhes",
+    "menu": "Cardápio",
+    "reviews": "Avaliações",
+    "photos": "Fotos",
+    "openNow": "Aberto agora",
+    "closed": "Fechado",
+    "priceLevel": ["Grátis", "Barato", "Moderado", "Caro", "Muito Caro"],
+    "noMenu": "Cardápio não disponível",
+    "loadingMenu": "Buscando cardápio...",
+    "menuFrom": "Cardápio de",
+    "addReview": "Escrever Avaliação",
+    "uploadPhotos": "Enviar Fotos"
+  },
+  "menu": {
+    "title": "Cardápio",
+    "translate": "Cardápio traduzido",
+    "discovering": "Buscando cardápio...",
+    "categories": "Categorias",
+    "addToOrder": "Adicionar",
+    "noItems": "Nenhum item encontrado no cardápio",
+    "source": {
+      "WEBSITE": "Do site do restaurante",
+      "GOOGLE": "Da busca do Google",
+      "OTHER": "De fonte terceira"
+    }
+  },
+  "order": {
+    "title": "Seu Pedido",
+    "items": "itens",
+    "total": "Total",
+    "generate": "Gerar Pedido",
+    "generatedOrder": "Texto do Pedido",
+    "copyOrder": "Copiar Texto do Pedido",
+    "communicateWithStaff": "Comunicar com Funcionário",
+    "orderCopied": "Pedido copiado!",
+    "emptyOrder": "Seu pedido está vazio",
+    "tableNumber": "Número da mesa (opcional)",
+    "notes": "Observações especiais (opcional)"
+  },
+  "communicate": {
+    "title": "Comunicação com Funcionário",
+    "youAreWriting": "Você está escrevendo",
+    "staffIsWriting": "Funcionário está escrevendo",
+    "typeYourMessage": "Digite sua mensagem...",
+    "translate": "Traduzir",
+    "translating": "Traduzindo...",
+    "customer": "Você",
+    "staff": "Funcionário",
+    "toggleSender": "Alternar quem fala"
+  },
+  "profile": {
+    "title": "Perfil",
+    "editProfile": "Editar Perfil",
+    "language": "Idioma do App",
+    "myReviews": "Minhas Avaliações",
+    "myPhotos": "Minhas Fotos",
+    "settings": "Configurações",
+    "version": "Versão"
+  },
+  "settings": {
+    "language": "Idioma",
+    "selectLanguage": "Selecione seu idioma",
+    "account": "Conta",
+    "notifications": "Notificações",
+    "about": "Sobre"
+  }
+}

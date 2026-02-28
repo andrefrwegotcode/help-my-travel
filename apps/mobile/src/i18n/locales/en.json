@@ -1,0 +1,109 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Try again",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done"
+  },
+  "auth": {
+    "login": "Sign In",
+    "register": "Sign Up",
+    "logout": "Sign Out",
+    "email": "Email",
+    "password": "Password",
+    "name": "Full Name",
+    "forgotPassword": "Forgot password?",
+    "resetPassword": "Reset Password",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "signInWithGoogle": "Continue with Google",
+    "sendResetLink": "Send Reset Link",
+    "resetEmailSent": "If the email exists, a reset link has been sent.",
+    "welcomeBack": "Welcome back!",
+    "createAccount": "Create your account"
+  },
+  "map": {
+    "title": "Nearby Restaurants",
+    "searchAddress": "Search by address...",
+    "useMyLocation": "Use my location",
+    "radius": "Radius",
+    "km": "km",
+    "noRestaurants": "No restaurants found in this area",
+    "searchingNearby": "Searching nearby...",
+    "viewList": "List View",
+    "viewMap": "Map View"
+  },
+  "restaurant": {
+    "details": "Details",
+    "menu": "Menu",
+    "reviews": "Reviews",
+    "photos": "Photos",
+    "openNow": "Open now",
+    "closed": "Closed",
+    "priceLevel": ["Free", "Inexpensive", "Moderate", "Expensive", "Very Expensive"],
+    "noMenu": "Menu not available",
+    "loadingMenu": "Discovering menu...",
+    "menuFrom": "Menu from",
+    "addReview": "Write a Review",
+    "uploadPhotos": "Upload Photos"
+  },
+  "menu": {
+    "title": "Menu",
+    "translate": "Translated menu",
+    "discovering": "Searching for menu...",
+    "categories": "Categories",
+    "addToOrder": "Add",
+    "noItems": "No menu items found",
+    "source": {
+      "WEBSITE": "From restaurant website",
+      "GOOGLE": "From Google Search",
+      "OTHER": "From third-party source"
+    }
+  },
+  "order": {
+    "title": "Your Order",
+    "items": "items",
+    "total": "Total",
+    "generate": "Generate Order",
+    "generatedOrder": "Order Text",
+    "copyOrder": "Copy Order Text",
+    "communicateWithStaff": "Communicate with Staff",
+    "orderCopied": "Order copied!",
+    "emptyOrder": "Your order is empty",
+    "tableNumber": "Table number (optional)",
+    "notes": "Special notes (optional)"
+  },
+  "communicate": {
+    "title": "Staff Communication",
+    "youAreWriting": "You are writing",
+    "staffIsWriting": "Staff is writing",
+    "typeYourMessage": "Type your message...",
+    "translate": "Translate",
+    "translating": "Translating...",
+    "customer": "You",
+    "staff": "Staff",
+    "toggleSender": "Switch speaker"
+  },
+  "profile": {
+    "title": "Profile",
+    "editProfile": "Edit Profile",
+    "language": "App Language",
+    "myReviews": "My Reviews",
+    "myPhotos": "My Photos",
+    "settings": "Settings",
+    "version": "Version"
+  },
+  "settings": {
+    "language": "Language",
+    "selectLanguage": "Select your language",
+    "account": "Account",
+    "notifications": "Notifications",
+    "about": "About"
+  }
+}
