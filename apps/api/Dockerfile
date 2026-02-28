@@ -3,8 +3,8 @@
 # ─────────────────────────────────────────────
 FROM node:20-alpine AS builder
 
-# Install pnpm
-RUN npm install -g pnpm@9
+# Install pnpm + OpenSSL for Prisma
+RUN apk add --no-cache openssl && npm install -g pnpm@9
 
 WORKDIR /app
 
@@ -39,8 +39,8 @@ RUN npm install -g pnpm@9
 
 WORKDIR /app
 
-# Install Chromium for Puppeteer
-RUN apk add --no-cache chromium nss freetype harfbuzz ca-certificates ttf-freefont
+# Install Chromium for Puppeteer + OpenSSL for Prisma
+RUN apk add --no-cache chromium nss freetype harfbuzz ca-certificates ttf-freefont openssl
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
