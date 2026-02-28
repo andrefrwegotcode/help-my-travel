@@ -53,6 +53,11 @@ COPY --from=builder /app/apps/api/package.json ./apps/api/
 
 COPY --from=builder /app/packages/database/prisma ./packages/database/prisma
 
+# Ensure workspace packages are resolvable at runtime
+RUN mkdir -p node_modules/@helpmytravel && \
+    ln -sf /app/packages/database node_modules/@helpmytravel/database && \
+    ln -sf /app/packages/shared node_modules/@helpmytravel/shared
+
 EXPOSE 3001
 
 CMD ["sh", "-c", "npx prisma migrate deploy --schema=packages/database/prisma/schema.prisma && node apps/api/dist/main"]
