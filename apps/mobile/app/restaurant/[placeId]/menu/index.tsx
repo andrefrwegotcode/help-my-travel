@@ -11,6 +11,12 @@ import { useAuthStore } from '../../../../src/store/auth.store';
 import { useOrderStore } from '../../../../src/store/order.store';
 import type { MenuItem, MenuCategory } from '@helpmytravel/shared';
 
+const headerOpts = {
+  headerStyle: { backgroundColor: '#FFFFFF', elevation: 0, shadowOpacity: 0, borderBottomWidth: 0.5, borderBottomColor: '#EBEBEB' } as any,
+  headerTintColor: '#222222',
+  headerTitleStyle: { fontWeight: '600' as const, fontSize: 17 },
+};
+
 export default function MenuScreen() {
   const { placeId } = useLocalSearchParams<{ placeId: string }>();
   const { t } = useTranslation();
@@ -31,11 +37,9 @@ export default function MenuScreen() {
       const res = await api.get(`/menu/${placeId}`, { params: { language: user?.language || 'en' } });
 
       if (res.data.cached || res.data.categories) {
-        // Cached menu returned immediately
         setMenu(res.data);
         setStatus('done');
       } else if (res.data.jobId) {
-        // Background job started — poll for completion
         setStatus('polling');
         pollJobStatus(res.data.jobId);
       }
@@ -47,7 +51,7 @@ export default function MenuScreen() {
 
   const pollJobStatus = async (jobId: string) => {
     let attempts = 0;
-    const maxAttempts = 60; // 2 minutes max
+    const maxAttempts = 60;
 
     const poll = async () => {
       if (attempts >= maxAttempts) {
@@ -66,7 +70,7 @@ export default function MenuScreen() {
           setStatus('error');
         } else {
           attempts++;
-          setTimeout(poll, 2000); // Poll every 2s
+          setTimeout(poll, 2000);
         }
       } catch {
         attempts++;
@@ -96,9 +100,9 @@ export default function MenuScreen() {
   if (status === 'error') {
     return (
       <>
-        <Stack.Screen options={{ title: t('menu.title'), headerStyle: { backgroundColor: '#FF6B35' }, headerTintColor: 'white' }} />
+        <Stack.Screen options={{ title: t('menu.title'), ...headerOpts }} />
         <View style={styles.centered}>
-          <Ionicons name="restaurant-outline" size={64} color="#CCC" />
+          <Ionicons name="restaurant-outline" size={64} color="#DDDDDD" />
           <Text style={styles.errorTitle}>{t('menu.notFound')}</Text>
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity style={styles.retryBtn} onPress={loadMenu}>
@@ -116,9 +120,9 @@ export default function MenuScreen() {
   if (status === 'done' && (!menu || !menu.categories || menu.categories.length === 0)) {
     return (
       <>
-        <Stack.Screen options={{ title: t('menu.title'), headerStyle: { backgroundColor: '#FF6B35' }, headerTintColor: 'white' }} />
+        <Stack.Screen options={{ title: t('menu.title'), ...headerOpts }} />
         <View style={styles.centered}>
-          <Ionicons name="document-text-outline" size={64} color="#CCC" />
+          <Ionicons name="document-text-outline" size={64} color="#DDDDDD" />
           <Text style={styles.errorTitle}>{t('menu.empty')}</Text>
           <Text style={styles.errorText}>{t('menu.emptyDescription')}</Text>
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
@@ -131,7 +135,7 @@ export default function MenuScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: t('menu.title'), headerStyle: { backgroundColor: '#FF6B35' }, headerTintColor: 'white' }} />
+      <Stack.Screen options={{ title: t('menu.title'), ...headerOpts }} />
       <View style={styles.container}>
         {menu?.source && (
           <View style={styles.sourceBanner}>
@@ -220,32 +224,32 @@ function MenuItemCard({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, gap: 16 },
-  loadingTitle: { fontSize: 18, fontWeight: '700', color: '#1A1A2E' },
-  loadingSubtitle: { color: '#888', fontSize: 14, textAlign: 'center' },
-  errorTitle: { fontSize: 18, fontWeight: '700', color: '#1A1A2E', textAlign: 'center' },
-  errorText: { color: '#888', fontSize: 14, textAlign: 'center', lineHeight: 20 },
+  loadingTitle: { fontSize: 18, fontWeight: '700', color: '#222222' },
+  loadingSubtitle: { color: '#717171', fontSize: 14, textAlign: 'center' },
+  errorTitle: { fontSize: 18, fontWeight: '700', color: '#222222', textAlign: 'center' },
+  errorText: { color: '#717171', fontSize: 14, textAlign: 'center', lineHeight: 20 },
   retryBtn: {
-    backgroundColor: '#FF6B35', borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12,
+    backgroundColor: '#FF6B35', borderRadius: 8, paddingHorizontal: 24, paddingVertical: 12,
     flexDirection: 'row', alignItems: 'center', gap: 8,
   },
   retryBtnText: { color: 'white', fontWeight: '700' },
   backBtn: { paddingHorizontal: 24, paddingVertical: 10 },
-  backBtnText: { color: '#888', fontWeight: '600', fontSize: 14 },
+  backBtnText: { color: '#717171', fontWeight: '600', fontSize: 14 },
   sourceBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     backgroundColor: '#EEF2FF', padding: 10, paddingHorizontal: 16,
   },
   sourceText: { fontSize: 12, color: '#667EEA' },
   scroll: { flex: 1 },
-  category: { padding: 16 },
-  categoryName: { fontSize: 14, fontWeight: '800', color: '#FF6B35', letterSpacing: 1, marginBottom: 8, textTransform: 'uppercase' },
+  category: { padding: 20 },
+  categoryName: { fontSize: 13, fontWeight: '800', color: '#FF6B35', letterSpacing: 1.5, marginBottom: 12, textTransform: 'uppercase' },
   orderBtn: {
     position: 'absolute', bottom: 20, left: 16, right: 16,
-    backgroundColor: '#FF6B35', borderRadius: 16, padding: 16,
+    backgroundColor: '#FF6B35', borderRadius: 8, padding: 16,
     flexDirection: 'row', alignItems: 'center',
-    shadowColor: '#FF6B35', shadowOpacity: 0.4, shadowRadius: 12, elevation: 6,
+    shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 12, elevation: 6,
   },
   orderBadge: {
     backgroundColor: 'white', borderRadius: 12, width: 24, height: 24,
@@ -257,21 +261,22 @@ const styles = StyleSheet.create({
 
 const cardStyles = StyleSheet.create({
   card: {
-    backgroundColor: 'white', borderRadius: 14, padding: 14, marginBottom: 8,
+    backgroundColor: 'white', borderRadius: 12, padding: 16, marginBottom: 12,
     flexDirection: 'row', alignItems: 'flex-start', gap: 12,
+    borderBottomWidth: 1, borderBottomColor: '#EBEBEB',
   },
-  image: { width: 60, height: 60, borderRadius: 8, backgroundColor: '#f0f0f0' },
+  image: { width: 72, height: 72, borderRadius: 10, backgroundColor: '#F7F7F7' },
   info: { flex: 1 },
-  name: { fontSize: 15, fontWeight: '700', color: '#1A1A2E' },
-  original: { fontSize: 12, color: '#888', marginTop: 2 },
-  desc: { fontSize: 13, color: '#666', marginTop: 4 },
+  name: { fontSize: 15, fontWeight: '600', color: '#222222' },
+  original: { fontSize: 12, color: '#B0B0B0', marginTop: 2 },
+  desc: { fontSize: 13, color: '#717171', marginTop: 4 },
   price: { fontSize: 14, fontWeight: '700', color: '#FF6B35', marginTop: 6 },
   controls: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'center' },
   btn: {
-    width: 32, height: 32, borderRadius: 8, borderWidth: 1.5, borderColor: '#E0E0E0',
+    width: 36, height: 36, borderRadius: 20, borderWidth: 1, borderColor: '#DDDDDD',
     justifyContent: 'center', alignItems: 'center',
   },
   btnAdd: { backgroundColor: '#FF6B35', borderColor: '#FF6B35' },
-  btnText: { fontSize: 16, fontWeight: '700', color: '#666' },
-  qty: { fontSize: 15, fontWeight: '700', color: '#1A1A2E', minWidth: 20, textAlign: 'center' },
+  btnText: { fontSize: 16, fontWeight: '700', color: '#717171' },
+  qty: { fontSize: 15, fontWeight: '700', color: '#222222', minWidth: 20, textAlign: 'center' },
 });

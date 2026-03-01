@@ -10,6 +10,7 @@ interface LogoProps {
   size?: 'small' | 'medium' | 'large';
   showText?: boolean;
   showTagline?: boolean;
+  dark?: boolean;
 }
 
 const SIZES = {
@@ -19,7 +20,6 @@ const SIZES = {
 };
 
 function LogoIcon({ size }: { size: number }) {
-  // The SVG viewBox is roughly 110x100 for the pin icon area
   return (
     <Svg width={size} height={size} viewBox="0 0 110 100" fill="none">
       <Defs>
@@ -73,7 +73,7 @@ function LogoIcon({ size }: { size: number }) {
   );
 }
 
-export function Logo({ size = 'medium', showText = true, showTagline = false }: LogoProps) {
+export function Logo({ size = 'medium', showText = true, showTagline = false, dark = false }: LogoProps) {
   const s = SIZES[size];
 
   return (
@@ -81,12 +81,12 @@ export function Logo({ size = 'medium', showText = true, showTagline = false }: 
       <LogoIcon size={s.icon} />
       {showText && (
         <View style={styles.textRow}>
-          <Text style={[styles.appNameWhite, { fontSize: s.fontSize }]}>Help My </Text>
+          <Text style={[dark ? styles.appNameDark : styles.appNameWhite, { fontSize: s.fontSize }]}>Help My </Text>
           <Text style={[styles.appNameOrange, { fontSize: s.fontSize }]}>Travel</Text>
         </View>
       )}
       {showTagline && (
-        <Text style={[styles.tagline, { fontSize: s.tagline }]}>MENUS TRANSLATED. EVERYWHERE.</Text>
+        <Text style={[dark ? styles.taglineDark : styles.tagline, { fontSize: s.tagline }]}>MENUS TRANSLATED. EVERYWHERE.</Text>
       )}
     </View>
   );
@@ -104,6 +104,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: -0.5,
   },
+  appNameDark: {
+    color: '#222222',
+    fontWeight: '700',
+    letterSpacing: -0.5,
+  },
   appNameOrange: {
     color: '#FF6B35',
     fontWeight: '700',
@@ -111,6 +116,12 @@ const styles = StyleSheet.create({
   },
   tagline: {
     color: 'rgba(255,255,255,0.45)',
+    letterSpacing: 1.5,
+    marginTop: 6,
+    fontWeight: '400',
+  },
+  taglineDark: {
+    color: '#717171',
     letterSpacing: 1.5,
     marginTop: 6,
     fontWeight: '400',

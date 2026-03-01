@@ -52,9 +52,11 @@ export default function ListScreen() {
       {/* Search bar */}
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
+          <Ionicons name="search" size={18} color="#B0B0B0" style={{ marginLeft: 4 }} />
           <TextInput
             style={styles.searchInput}
             placeholder={t('map.searchAddress')}
+            placeholderTextColor="#B0B0B0"
             value={addressInput}
             onChangeText={setAddressInput}
             onSubmitEditing={searchByAddress}
@@ -88,7 +90,7 @@ export default function ListScreen() {
 
       {!searchParams && !isLoading && (
         <View style={styles.center}>
-          <Ionicons name="restaurant-outline" size={64} color="#CCC" />
+          <Ionicons name="restaurant-outline" size={64} color="#DDDDDD" />
           <Text style={styles.emptyText}>{t('map.useMyLocation')}</Text>
           <TouchableOpacity style={styles.locButton} onPress={searchCurrentLocation}>
             <Ionicons name="locate" size={18} color="white" />
@@ -100,7 +102,7 @@ export default function ListScreen() {
       <FlatList
         data={data?.places || []}
         keyExtractor={(item) => item.placeId}
-        contentContainerStyle={{ padding: 12, gap: 12 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8 }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -138,7 +140,7 @@ export default function ListScreen() {
                 )}
               </View>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#CCC" />
+            <Ionicons name="chevron-forward" size={20} color="#DDDDDD" />
           </TouchableOpacity>
         )}
         ListEmptyComponent={
@@ -154,41 +156,43 @@ export default function ListScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  searchContainer: { backgroundColor: 'white', padding: 12, gap: 8 },
-  searchBar: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  searchContainer: { backgroundColor: 'white', padding: 16, gap: 10 },
+  searchBar: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    borderWidth: 1, borderColor: '#EBEBEB', borderRadius: 24,
+    paddingHorizontal: 12,
+  },
   searchInput: {
-    flex: 1, borderWidth: 1.5, borderColor: '#E0E0E0', borderRadius: 12,
-    paddingHorizontal: 14, paddingVertical: 10, fontSize: 14,
+    flex: 1, paddingVertical: 10, fontSize: 14, color: '#222222',
   },
   locBtn: { padding: 10 },
   radiusRow: { flexDirection: 'row', gap: 8 },
   chip: {
-    paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20,
-    backgroundColor: '#F5F5F5', borderWidth: 1, borderColor: '#E0E0E0',
+    paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
+    backgroundColor: '#F7F7F7', borderWidth: 1, borderColor: '#DDDDDD',
   },
   chipActive: { backgroundColor: '#FF6B35', borderColor: '#FF6B35' },
-  chipText: { fontSize: 12, fontWeight: '600', color: '#666' },
+  chipText: { fontSize: 12, fontWeight: '600', color: '#717171' },
   chipTextActive: { color: 'white' },
   card: {
-    backgroundColor: 'white', borderRadius: 14, padding: 16,
-    flexDirection: 'row', alignItems: 'center',
-    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
+    paddingVertical: 16, flexDirection: 'row', alignItems: 'center',
+    borderBottomWidth: 1, borderBottomColor: '#EBEBEB',
   },
   cardContent: { flex: 1 },
-  cardName: { fontSize: 16, fontWeight: '700', color: '#1A1A2E' },
-  cardAddress: { fontSize: 13, color: '#888', marginTop: 2 },
+  cardName: { fontSize: 16, fontWeight: '600', color: '#222222' },
+  cardAddress: { fontSize: 13, color: '#717171', marginTop: 2 },
   cardMeta: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 },
   ratingBadge: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   ratingText: { fontSize: 13, fontWeight: '600', color: '#FF6B35' },
-  distanceText: { fontSize: 12, color: '#888' },
+  distanceText: { fontSize: 12, color: '#717171' },
   openBadge: { fontSize: 12, fontWeight: '600' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, gap: 16 },
-  loadingText: { color: '#888', fontSize: 14 },
-  emptyText: { color: '#888', fontSize: 15, textAlign: 'center' },
+  loadingText: { color: '#717171', fontSize: 14 },
+  emptyText: { color: '#717171', fontSize: 15, textAlign: 'center' },
   locButton: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: '#FF6B35', borderRadius: 12, paddingHorizontal: 20, paddingVertical: 12,
+    backgroundColor: '#FF6B35', borderRadius: 8, paddingHorizontal: 20, paddingVertical: 12,
   },
   locButtonText: { color: 'white', fontWeight: '600' },
 });

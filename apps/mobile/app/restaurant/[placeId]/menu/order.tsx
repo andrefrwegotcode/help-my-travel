@@ -12,6 +12,12 @@ import { useOrderStore } from '../../../../src/store/order.store';
 import { useAuthStore } from '../../../../src/store/auth.store';
 import { useQuery } from '@tanstack/react-query';
 
+const headerOpts = {
+  headerStyle: { backgroundColor: '#FFFFFF', elevation: 0, shadowOpacity: 0, borderBottomWidth: 0.5, borderBottomColor: '#EBEBEB' } as any,
+  headerTintColor: '#222222',
+  headerTitleStyle: { fontWeight: '600' as const, fontSize: 17 },
+};
+
 export default function OrderScreen() {
   const { placeId } = useLocalSearchParams<{ placeId: string }>();
   const { t } = useTranslation();
@@ -57,8 +63,8 @@ export default function OrderScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: t('order.title'), headerStyle: { backgroundColor: '#FF6B35' }, headerTintColor: 'white' }} />
-      <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
+      <Stack.Screen options={{ title: t('order.title'), ...headerOpts }} />
+      <ScrollView style={styles.container} contentContainerStyle={{ padding: 20, paddingBottom: 32 }}>
 
         {/* Order items summary */}
         <View style={styles.section}>
@@ -87,13 +93,13 @@ export default function OrderScreen() {
           <Text style={styles.label}>{t('order.tableNumber')}</Text>
           <TextInput
             style={styles.input} value={tableNumber} onChangeText={setTableNumber}
-            placeholder="e.g. 5"
+            placeholder="e.g. 5" placeholderTextColor="#B0B0B0"
           />
           <Text style={[styles.label, { marginTop: 12 }]}>{t('order.notes')}</Text>
           <TextInput
             style={[styles.input, { height: 80 }]}
             value={notes} onChangeText={setNotes}
-            placeholder="e.g. No gluten, extra spicy..."
+            placeholder="e.g. No gluten, extra spicy..." placeholderTextColor="#B0B0B0"
             multiline
           />
         </View>
@@ -137,34 +143,39 @@ export default function OrderScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  section: { backgroundColor: 'white', borderRadius: 16, padding: 16, marginBottom: 12 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#1A1A2E', marginBottom: 12 },
-  itemRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderColor: '#F5F5F5' },
-  itemName: { flex: 1, fontSize: 14, color: '#333' },
-  itemQty: { fontSize: 14, fontWeight: '700', color: '#666', marginRight: 8 },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  section: {
+    backgroundColor: 'white', borderRadius: 12, padding: 16, marginBottom: 16,
+    borderWidth: 1, borderColor: '#EBEBEB',
+  },
+  sectionTitle: { fontSize: 16, fontWeight: '600', color: '#222222', marginBottom: 12 },
+  itemRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderColor: '#EBEBEB' },
+  itemName: { flex: 1, fontSize: 14, color: '#222222' },
+  itemQty: { fontSize: 14, fontWeight: '700', color: '#717171', marginRight: 8 },
   itemPrice: { fontSize: 14, fontWeight: '700', color: '#FF6B35' },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12, paddingTop: 12, borderTopWidth: 2, borderColor: '#F5F5F5' },
-  totalLabel: { fontSize: 16, fontWeight: '700', color: '#1A1A2E' },
+  totalRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12, paddingTop: 12, borderTopWidth: 2, borderColor: '#EBEBEB' },
+  totalLabel: { fontSize: 16, fontWeight: '700', color: '#222222' },
   totalValue: { fontSize: 18, fontWeight: '800', color: '#FF6B35' },
-  label: { fontSize: 13, fontWeight: '600', color: '#666', marginBottom: 6 },
+  label: { fontSize: 12, fontWeight: '500', color: '#717171', marginBottom: 6 },
   input: {
-    borderWidth: 1.5, borderColor: '#E0E0E0', borderRadius: 12,
-    paddingHorizontal: 14, paddingVertical: 10, fontSize: 14,
+    borderWidth: 1, borderColor: '#DDDDDD', borderRadius: 8,
+    paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: '#222222',
   },
   generateBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: '#FF6B35', borderRadius: 16, padding: 18,
+    backgroundColor: '#FF6B35', borderRadius: 8, padding: 18,
   },
   generateBtnText: { color: 'white', fontSize: 16, fontWeight: '700' },
-  orderTextBox: { backgroundColor: 'white', borderRadius: 16, padding: 16 },
+  orderTextBox: {
+    backgroundColor: 'white', borderRadius: 12, padding: 16,
+    borderWidth: 1, borderColor: '#EBEBEB',
+  },
   orderTextLabel: { fontSize: 13, fontWeight: '700', color: '#667EEA', marginBottom: 8, textTransform: 'uppercase' },
-  orderText: { fontSize: 15, color: '#1A1A2E', lineHeight: 22, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' },
+  orderText: { fontSize: 15, color: '#222222', lineHeight: 22, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' },
   orderActions: { flexDirection: 'row', gap: 8, marginTop: 16 },
   actionBtn: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-    borderWidth: 1.5, borderColor: '#FF6B35', borderRadius: 10, paddingVertical: 10,
+    borderWidth: 1, borderColor: '#FF6B35', borderRadius: 8, paddingVertical: 10,
   },
   actionBtnText: { color: '#FF6B35', fontWeight: '600', fontSize: 13 },
 });
-

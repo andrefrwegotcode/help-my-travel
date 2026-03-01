@@ -4,9 +4,15 @@ export default function PlaceLayout() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: '#FF6B35' },
-        headerTintColor: 'white',
-        headerTitleStyle: { fontWeight: '700' },
+        headerStyle: {
+          backgroundColor: '#FFFFFF',
+          elevation: 0,
+          shadowOpacity: 0,
+          borderBottomWidth: 0.5,
+          borderBottomColor: '#EBEBEB',
+        } as any,
+        headerTintColor: '#222222',
+        headerTitleStyle: { fontWeight: '600', fontSize: 17 },
       }}
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />

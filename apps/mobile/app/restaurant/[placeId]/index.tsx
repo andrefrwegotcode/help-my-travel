@@ -37,9 +37,15 @@ export default function RestaurantScreen() {
       <Stack.Screen
         options={{
           title: place?.name || 'Restaurant',
-          headerStyle: { backgroundColor: '#FF6B35' },
-          headerTintColor: 'white',
-          headerTitleStyle: { fontWeight: '700' },
+          headerStyle: {
+            backgroundColor: '#FFFFFF',
+            elevation: 0,
+            shadowOpacity: 0,
+            borderBottomWidth: 0.5,
+            borderBottomColor: '#EBEBEB',
+          } as any,
+          headerTintColor: '#222222',
+          headerTitleStyle: { fontWeight: '600', fontSize: 17 },
         }}
       />
       <View style={styles.container}>
@@ -64,7 +70,7 @@ export default function RestaurantScreen() {
             )}
             {place?.phone && (
               <View style={styles.badge}>
-                <Ionicons name="call-outline" size={12} color="#666" />
+                <Ionicons name="call-outline" size={12} color="#717171" />
                 <Text style={styles.badgeText}>{place.phone}</Text>
               </View>
             )}
@@ -103,7 +109,7 @@ export default function RestaurantScreen() {
           <View style={styles.section}>
             {place?.website && (
               <View style={styles.detailRow}>
-                <Ionicons name="globe-outline" size={16} color="#666" />
+                <Ionicons name="globe-outline" size={16} color="#717171" />
                 <Text style={styles.detailText}>{place.website}</Text>
               </View>
             )}
@@ -118,48 +124,32 @@ export default function RestaurantScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
   loading: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { backgroundColor: 'white', padding: 16 },
-  name: { fontSize: 22, fontWeight: '800', color: '#1A1A2E' },
-  address: { fontSize: 14, color: '#666', marginTop: 4 },
+  header: { backgroundColor: 'white', padding: 20 },
+  name: { fontSize: 26, fontWeight: '800', color: '#222222' },
+  address: { fontSize: 14, color: '#717171', marginTop: 4 },
   metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
   badge: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 20,
+    borderWidth: 1, borderColor: '#DDDDDD', borderRadius: 20,
     paddingHorizontal: 10, paddingVertical: 4,
   },
-  badgeText: { fontSize: 12, color: '#666' },
+  badgeText: { fontSize: 12, color: '#717171' },
   menuBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: '#FF6B35', margin: 16, borderRadius: 16, padding: 16,
+    backgroundColor: '#FF6B35', margin: 20, borderRadius: 8, padding: 18,
   },
   menuBtnText: { flex: 1, color: 'white', fontSize: 17, fontWeight: '700', marginLeft: 8 },
-  scanRow: { flexDirection: 'row', gap: 10, marginHorizontal: 16, marginBottom: 12 },
+  scanRow: { flexDirection: 'row', gap: 10, marginHorizontal: 20, marginBottom: 12 },
   scanBtn: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: 'white', borderWidth: 1.5, borderColor: '#FF6B35', borderRadius: 12, padding: 12,
+    backgroundColor: 'white', borderWidth: 1, borderColor: '#FF6B35', borderRadius: 8, padding: 12,
   },
   scanBtnText: { color: '#FF6B35', fontWeight: '600', fontSize: 14 },
-  tabs: { flexDirection: 'row', backgroundColor: 'white', borderBottomWidth: 1, borderColor: '#F0F0F0' },
-  tab: { flex: 1, paddingVertical: 14, alignItems: 'center' },
-  tabActive: { borderBottomWidth: 2.5, borderBottomColor: '#FF6B35' },
-  tabText: { fontSize: 14, color: '#888' },
-  tabTextActive: { color: '#FF6B35', fontWeight: '700' },
-  content: { flex: 1, padding: 16 },
+  content: { flex: 1, padding: 20 },
   section: { gap: 8 },
   detailRow: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
   detailText: { color: '#444', fontSize: 14, flex: 1 },
-  hoursText: { fontSize: 13, color: '#555' },
-  addReviewBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: 'white', borderRadius: 12, padding: 14, marginBottom: 12,
-    borderWidth: 1.5, borderColor: '#FFE5D8',
-  },
-  addReviewText: { color: '#FF6B35', fontWeight: '600', fontSize: 14 },
-  reviewCard: { backgroundColor: 'white', borderRadius: 12, padding: 14, marginBottom: 8 },
-  reviewHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  reviewUser: { fontWeight: '700', color: '#1A1A2E' },
-  stars: { flexDirection: 'row', gap: 2 },
-  reviewComment: { color: '#555', fontSize: 13, marginTop: 6 },
+  hoursText: { fontSize: 13, color: '#717171' },
 });

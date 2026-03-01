@@ -9,6 +9,12 @@ import { Ionicons } from '@expo/vector-icons';
 import api from '../../../src/services/api';
 import { useAuthStore } from '../../../src/store/auth.store';
 
+const headerOpts = {
+  headerStyle: { backgroundColor: '#FFFFFF', elevation: 0, shadowOpacity: 0, borderBottomWidth: 0.5, borderBottomColor: '#EBEBEB' } as any,
+  headerTintColor: '#222222',
+  headerTitleStyle: { fontWeight: '600' as const, fontSize: 17 },
+};
+
 export default function ScanQrScreen() {
   const { placeId } = useLocalSearchParams<{ placeId: string }>();
   const { t } = useTranslation();
@@ -21,7 +27,6 @@ export default function ScanQrScreen() {
   const handleBarcodeScanned = async ({ data }: { data: string }) => {
     if (scannedRef.current) return;
 
-    // Check if it's a valid URL
     if (!data.startsWith('http://') && !data.startsWith('https://')) {
       Alert.alert(t('common.error'), t('menu.invalidQr'));
       return;
@@ -85,9 +90,9 @@ export default function ScanQrScreen() {
   if (!permission.granted) {
     return (
       <>
-        <Stack.Screen options={{ title: t('restaurant.scanQr'), headerStyle: { backgroundColor: '#FF6B35' }, headerTintColor: 'white' }} />
+        <Stack.Screen options={{ title: t('restaurant.scanQr'), ...headerOpts }} />
         <View style={styles.centered}>
-          <Ionicons name="camera-outline" size={64} color="#CCC" />
+          <Ionicons name="camera-outline" size={64} color="#DDDDDD" />
           <Text style={styles.permText}>Camera permission is needed to scan QR codes</Text>
           <TouchableOpacity style={styles.permBtn} onPress={requestPermission}>
             <Text style={styles.permBtnText}>Grant Permission</Text>
@@ -99,7 +104,7 @@ export default function ScanQrScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: t('restaurant.scanQr'), headerStyle: { backgroundColor: '#FF6B35' }, headerTintColor: 'white' }} />
+      <Stack.Screen options={{ title: t('restaurant.scanQr'), ...headerOpts }} />
       <View style={styles.container}>
         {status === 'scanning' ? (
           <>
@@ -127,20 +132,20 @@ export default function ScanQrScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, gap: 16, backgroundColor: '#f5f5f5' },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, gap: 16, backgroundColor: '#FFFFFF' },
   camera: { flex: 1 },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center', alignItems: 'center',
   },
   scanFrame: {
-    width: 250, height: 250, borderWidth: 3, borderColor: '#FF6B35',
+    width: 250, height: 250, borderWidth: 2, borderColor: '#FF6B35',
     borderRadius: 20, backgroundColor: 'transparent',
   },
   hintText: { color: 'white', fontSize: 16, fontWeight: '600', marginTop: 24, textAlign: 'center' },
-  loadingTitle: { fontSize: 16, fontWeight: '700', color: '#1A1A2E', textAlign: 'center' },
-  urlText: { fontSize: 12, color: '#888', textAlign: 'center' },
-  permText: { fontSize: 16, color: '#666', textAlign: 'center' },
-  permBtn: { backgroundColor: '#FF6B35', borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12 },
+  loadingTitle: { fontSize: 16, fontWeight: '700', color: '#222222', textAlign: 'center' },
+  urlText: { fontSize: 12, color: '#717171', textAlign: 'center' },
+  permText: { fontSize: 16, color: '#717171', textAlign: 'center' },
+  permBtn: { backgroundColor: '#FF6B35', borderRadius: 8, paddingHorizontal: 24, paddingVertical: 12 },
   permBtnText: { color: 'white', fontWeight: '700', fontSize: 16 },
 });

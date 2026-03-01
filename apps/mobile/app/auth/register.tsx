@@ -67,7 +67,7 @@ export default function RegisterScreen() {
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
-          <Logo size="small" showText />
+          <Logo size="small" showText dark />
         </View>
 
         <View style={styles.card}>
@@ -126,12 +126,12 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.primary },
-  scroll: { flexGrow: 1, justifyContent: 'center', padding: 20 },
-  header: { alignItems: 'center', marginBottom: 24 },
-  card: { backgroundColor: colors.white, borderRadius: 24, padding: 24 },
-  title: { fontSize: 22, fontWeight: '700', color: colors.navy, marginBottom: 8 },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  scroll: { flexGrow: 1, justifyContent: 'center', padding: 24 },
+  header: { alignItems: 'center', marginBottom: 32 },
+  card: { padding: 24 },
+  title: { fontSize: 26, fontWeight: '800', color: '#222222', marginBottom: 16 },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
   footerText: { color: colors.textSecondary, fontSize: 14 },
-  footerLink: { color: colors.primary, fontSize: 14, fontWeight: '700' },
+  footerLink: { color: colors.primary, fontSize: 14, fontWeight: '600' },
 });

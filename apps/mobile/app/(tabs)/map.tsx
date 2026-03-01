@@ -84,9 +84,11 @@ export default function MapScreen() {
     <View style={styles.container}>
       {/* Search bar */}
       <View style={styles.searchBar}>
+        <Ionicons name="search" size={18} color="#B0B0B0" style={{ marginLeft: 16 }} />
         <TextInput
           style={styles.searchInput}
           placeholder={t('map.searchAddress')}
+          placeholderTextColor="#B0B0B0"
           value={addressInput}
           onChangeText={setAddressInput}
           onSubmitEditing={searchByAddress}
@@ -173,31 +175,32 @@ export default function MapScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
   searchBar: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: 'white', margin: 12, borderRadius: 14,
-    paddingHorizontal: 14, shadowColor: '#000', shadowOpacity: 0.08,
-    shadowRadius: 6, elevation: 3,
+    backgroundColor: 'white', margin: 16, borderRadius: 24,
+    paddingHorizontal: 4, shadowColor: '#000', shadowOpacity: 0.06,
+    shadowRadius: 10, elevation: 3,
+    borderWidth: 1, borderColor: '#EBEBEB',
   },
-  searchInput: { flex: 1, paddingVertical: 12, fontSize: 15, color: '#1A1A2E' },
-  locationBtn: { padding: 8 },
-  radiusRow: { flexDirection: 'row', paddingHorizontal: 12, gap: 8, marginBottom: 8 },
+  searchInput: { flex: 1, paddingVertical: 12, paddingHorizontal: 10, fontSize: 14, color: '#222222' },
+  locationBtn: { padding: 10, marginRight: 6 },
+  radiusRow: { flexDirection: 'row', paddingHorizontal: 16, gap: 8, marginBottom: 8 },
   radiusChip: {
-    paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20,
-    backgroundColor: 'white', borderWidth: 1.5, borderColor: '#E0E0E0',
+    paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
+    backgroundColor: 'white', borderWidth: 1, borderColor: '#DDDDDD',
   },
   radiusChipActive: { backgroundColor: '#FF6B35', borderColor: '#FF6B35' },
-  radiusChipText: { fontSize: 13, fontWeight: '600', color: '#666' },
+  radiusChipText: { fontSize: 12, fontWeight: '600', color: '#717171' },
   radiusChipTextActive: { color: 'white' },
   map: { flex: 1 },
   mapPlaceholder: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
-  mapPlaceholderText: { color: '#666', fontSize: 14 },
+  mapPlaceholderText: { color: '#717171', fontSize: 14 },
   loadingOverlay: {
     position: 'absolute', bottom: 20, left: '50%', transform: [{ translateX: -80 }],
-    backgroundColor: 'white', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10,
+    backgroundColor: 'white', borderRadius: 24, paddingHorizontal: 16, paddingVertical: 10,
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 8, elevation: 4,
+    shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, elevation: 3,
   },
-  loadingText: { color: '#666', fontSize: 13 },
+  loadingText: { color: '#717171', fontSize: 13 },
 });

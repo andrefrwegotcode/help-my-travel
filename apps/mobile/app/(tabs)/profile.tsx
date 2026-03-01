@@ -63,36 +63,39 @@ function MenuItem({ icon, label, value, onPress }: any) {
       </View>
       <View style={styles.menuItemRight}>
         {value && <Text style={styles.menuItemValue}>{value}</Text>}
-        <Ionicons name="chevron-forward" size={18} color="#CCC" />
+        <Ionicons name="chevron-forward" size={18} color="#DDDDDD" />
       </View>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  avatarSection: { alignItems: 'center', padding: 32, backgroundColor: 'white' },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  avatarSection: { alignItems: 'center', padding: 40, backgroundColor: 'white' },
   avatar: {
-    width: 80, height: 80, borderRadius: 40,
+    width: 88, height: 88, borderRadius: 44,
     backgroundColor: '#FF6B35', justifyContent: 'center', alignItems: 'center',
   },
-  avatarText: { fontSize: 32, fontWeight: '700', color: 'white' },
-  name: { fontSize: 20, fontWeight: '700', color: '#1A1A2E', marginTop: 12 },
-  email: { fontSize: 14, color: '#888', marginTop: 4 },
-  section: { backgroundColor: 'white', borderRadius: 16, margin: 16, overflow: 'hidden' },
+  avatarText: { fontSize: 36, fontWeight: '700', color: 'white' },
+  name: { fontSize: 24, fontWeight: '800', color: '#222222', marginTop: 16 },
+  email: { fontSize: 14, color: '#717171', marginTop: 6 },
+  section: {
+    backgroundColor: 'white', borderRadius: 12, margin: 20, overflow: 'hidden',
+    borderWidth: 1, borderColor: '#EBEBEB',
+  },
   menuItem: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    padding: 16, borderBottomWidth: 1, borderBottomColor: '#F5F5F5',
+    padding: 18, borderBottomWidth: 1, borderBottomColor: '#EBEBEB',
   },
   menuItemLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  menuItemLabel: { fontSize: 15, color: '#1A1A2E' },
+  menuItemLabel: { fontSize: 15, color: '#222222' },
   menuItemRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  menuItemValue: { fontSize: 14, color: '#888' },
+  menuItemValue: { fontSize: 14, color: '#717171' },
   logoutBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, margin: 16, padding: 16,
-    backgroundColor: 'white', borderRadius: 16, borderWidth: 1.5, borderColor: '#FFE5EE',
+    gap: 8, margin: 20, padding: 16,
+    backgroundColor: 'white', borderRadius: 12, borderWidth: 1, borderColor: '#EBEBEB',
   },
   logoutText: { color: '#F7567C', fontSize: 15, fontWeight: '600' },
-  version: { textAlign: 'center', color: '#CCC', fontSize: 12, marginBottom: 32 },
+  version: { textAlign: 'center', color: '#B0B0B0', fontSize: 12, marginBottom: 32 },
 });

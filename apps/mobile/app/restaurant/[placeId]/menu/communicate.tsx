@@ -20,8 +20,6 @@ export default function CommunicateScreen() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Customer speaks their language → translate to local
-  // Staff speaks local → translate to customer language
   const fromLanguage = sender === 'customer' ? (user?.language || 'en') : 'auto';
   const toLanguage = sender === 'customer' ? 'auto' : (user?.language || 'en');
 
@@ -58,7 +56,12 @@ export default function CommunicateScreen() {
   return (
     <>
       <Stack.Screen
-        options={{ title: t('communicate.title'), headerStyle: { backgroundColor: '#667EEA' }, headerTintColor: 'white' }}
+        options={{
+          title: t('communicate.title'),
+          headerStyle: { backgroundColor: '#FFFFFF', elevation: 0, shadowOpacity: 0, borderBottomWidth: 0.5, borderBottomColor: '#EBEBEB' } as any,
+          headerTintColor: '#222222',
+          headerTitleStyle: { fontWeight: '600', fontSize: 17 },
+        }}
       />
       <KeyboardAvoidingView
         style={styles.container}
@@ -89,10 +92,10 @@ export default function CommunicateScreen() {
         </View>
 
         {/* Messages */}
-        <ScrollView ref={scrollViewRef} style={styles.messages} contentContainerStyle={{ padding: 12, gap: 8 }}>
+        <ScrollView ref={scrollViewRef} style={styles.messages} contentContainerStyle={{ padding: 16, gap: 10 }}>
           {messages.length === 0 && (
             <View style={styles.emptyMessages}>
-              <Ionicons name="chatbubbles-outline" size={48} color="#CCC" />
+              <Ionicons name="chatbubbles-outline" size={48} color="#DDDDDD" />
               <Text style={styles.emptyText}>Start translating messages</Text>
             </View>
           )}
@@ -113,6 +116,7 @@ export default function CommunicateScreen() {
                   ? t('communicate.typeYourMessage')
                   : 'Type in local language...'
               }
+              placeholderTextColor="#B0B0B0"
               multiline
               maxLength={500}
             />
@@ -157,29 +161,29 @@ function MessageBubble({ message }: { message: ChatMessage }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  toggleRow: { backgroundColor: 'white', padding: 12, alignItems: 'center', gap: 8 },
-  toggleLabel: { fontSize: 12, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5 },
-  toggle: { flexDirection: 'row', backgroundColor: '#F5F5F5', borderRadius: 12, padding: 4 },
-  toggleOption: { flex: 1, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10, alignItems: 'center' },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  toggleRow: { backgroundColor: 'white', padding: 16, alignItems: 'center', gap: 8, borderBottomWidth: 0.5, borderBottomColor: '#EBEBEB' },
+  toggleLabel: { fontSize: 12, color: '#717171', textTransform: 'uppercase', letterSpacing: 0.5 },
+  toggle: { flexDirection: 'row', backgroundColor: '#F7F7F7', borderRadius: 24, padding: 4 },
+  toggleOption: { flex: 1, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 20, alignItems: 'center' },
   toggleActive: { backgroundColor: '#FF6B35' },
   toggleStaffActive: { backgroundColor: '#667EEA' },
-  toggleText: { fontSize: 13, fontWeight: '600', color: '#888' },
+  toggleText: { fontSize: 13, fontWeight: '600', color: '#717171' },
   toggleTextActive: { color: 'white' },
   messages: { flex: 1 },
   emptyMessages: { alignItems: 'center', paddingTop: 60, gap: 12 },
-  emptyText: { color: '#888', fontSize: 14 },
-  inputArea: { backgroundColor: 'white', padding: 12, gap: 6 },
+  emptyText: { color: '#717171', fontSize: 14 },
+  inputArea: { backgroundColor: 'white', padding: 12, gap: 6, borderTopWidth: 0.5, borderTopColor: '#EBEBEB' },
   inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
   input: {
-    flex: 1, borderWidth: 1.5, borderColor: '#E0E0E0', borderRadius: 14,
-    paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, maxHeight: 100,
+    flex: 1, borderWidth: 1, borderColor: '#DDDDDD', borderRadius: 24,
+    paddingHorizontal: 16, paddingVertical: 10, fontSize: 14, maxHeight: 100, color: '#222222',
   },
   sendBtn: {
-    width: 44, height: 44, borderRadius: 14, backgroundColor: '#667EEA',
+    width: 44, height: 44, borderRadius: 22, backgroundColor: '#667EEA',
     justifyContent: 'center', alignItems: 'center',
   },
-  hint: { fontSize: 11, color: '#AAA', textAlign: 'center' },
+  hint: { fontSize: 11, color: '#B0B0B0', textAlign: 'center' },
 });
 
 const bubbleStyles = StyleSheet.create({
@@ -187,14 +191,13 @@ const bubbleStyles = StyleSheet.create({
   customerContainer: { alignSelf: 'flex-end' },
   staffContainer: { alignSelf: 'flex-start' },
   bubble: {
-    borderRadius: 16, padding: 12,
-    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, elevation: 1,
+    borderRadius: 18, padding: 12,
   },
   customerBubble: { backgroundColor: '#FFF5F2', borderWidth: 1, borderColor: '#FFE5D8' },
   staffBubble: { backgroundColor: '#F0F2FF', borderWidth: 1, borderColor: '#E0E5FF' },
   label: { fontSize: 11, fontWeight: '700', marginBottom: 4 },
-  originalText: { fontSize: 14, color: '#1A1A2E' },
-  divider: { height: 1, backgroundColor: '#E0E0E0', marginVertical: 8 },
-  translatedLabel: { fontSize: 10, color: '#888', marginBottom: 2 },
+  originalText: { fontSize: 14, color: '#222222' },
+  divider: { height: 1, backgroundColor: '#EBEBEB', marginVertical: 8 },
+  translatedLabel: { fontSize: 10, color: '#B0B0B0', marginBottom: 2 },
   translatedText: { fontSize: 14, color: '#444', fontStyle: 'italic' },
 });

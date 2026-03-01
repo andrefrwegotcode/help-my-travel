@@ -9,6 +9,12 @@ import { Ionicons } from '@expo/vector-icons';
 import api from '../../../src/services/api';
 import { useAuthStore } from '../../../src/store/auth.store';
 
+const headerOpts = {
+  headerStyle: { backgroundColor: '#FFFFFF', elevation: 0, shadowOpacity: 0, borderBottomWidth: 0.5, borderBottomColor: '#EBEBEB' } as any,
+  headerTintColor: '#222222',
+  headerTitleStyle: { fontWeight: '600' as const, fontSize: 17 },
+};
+
 export default function ScanPhotoScreen() {
   const { placeId } = useLocalSearchParams<{ placeId: string }>();
   const { t } = useTranslation();
@@ -97,12 +103,12 @@ export default function ScanPhotoScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: t('restaurant.scanPhoto'), headerStyle: { backgroundColor: '#FF6B35' }, headerTintColor: 'white' }} />
+      <Stack.Screen options={{ title: t('restaurant.scanPhoto'), ...headerOpts }} />
       <View style={styles.container}>
         {status === 'idle' && (
           <>
             <View style={styles.iconArea}>
-              <Ionicons name="document-text-outline" size={80} color="#FF6B35" />
+              <Ionicons name="document-text-outline" size={80} color="#222222" />
               <Text style={styles.title}>{t('restaurant.scanPhoto')}</Text>
               <Text style={styles.subtitle}>{t('menu.photoDescription')}</Text>
             </View>
@@ -137,23 +143,23 @@ export default function ScanPhotoScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
   iconArea: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
-  title: { fontSize: 22, fontWeight: '800', color: '#1A1A2E', marginTop: 16 },
-  subtitle: { fontSize: 14, color: '#888', textAlign: 'center', marginTop: 8, lineHeight: 20 },
+  title: { fontSize: 22, fontWeight: '700', color: '#222222', marginTop: 16 },
+  subtitle: { fontSize: 14, color: '#717171', textAlign: 'center', marginTop: 8, lineHeight: 20 },
   btnArea: { padding: 24, gap: 12 },
   primaryBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-    backgroundColor: '#FF6B35', borderRadius: 14, padding: 16,
+    backgroundColor: '#FF6B35', borderRadius: 8, padding: 16,
   },
   primaryBtnText: { color: 'white', fontSize: 17, fontWeight: '700' },
   outlineBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-    backgroundColor: 'white', borderWidth: 1.5, borderColor: '#FF6B35', borderRadius: 14, padding: 16,
+    backgroundColor: 'white', borderWidth: 1, borderColor: '#FF6B35', borderRadius: 8, padding: 16,
   },
   outlineBtnText: { color: '#FF6B35', fontSize: 17, fontWeight: '700' },
   loadingArea: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
-  preview: { width: 200, height: 280, borderRadius: 12, backgroundColor: '#e0e0e0' },
-  loadingText: { fontSize: 18, fontWeight: '700', color: '#1A1A2E', marginTop: 12 },
-  subText: { fontSize: 14, color: '#888', textAlign: 'center', marginTop: 4 },
+  preview: { width: 200, height: 280, borderRadius: 12, backgroundColor: '#F7F7F7' },
+  loadingText: { fontSize: 18, fontWeight: '700', color: '#222222', marginTop: 12 },
+  subText: { fontSize: 14, color: '#717171', textAlign: 'center', marginTop: 4 },
 });

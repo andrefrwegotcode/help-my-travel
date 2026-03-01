@@ -20,7 +20,7 @@ export default function IndexScreen() {
 
   return (
     <View style={styles.container}>
-      <Logo size="large" showText showTagline />
+      <Logo size="large" showText showTagline dark />
     </View>
   );
 }
@@ -30,6 +30,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.primary,
+    backgroundColor: '#FFFFFF',
   },
 });

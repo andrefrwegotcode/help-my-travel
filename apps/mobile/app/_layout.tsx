@@ -26,7 +26,7 @@ export default function RootLayout() {
         <Stack.Screen name="auth" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="restaurant" />
-        <Stack.Screen name="settings" options={{ headerShown: true, headerStyle: { backgroundColor: '#FF6B35' }, headerTintColor: 'white', title: 'Settings' }} />
+        <Stack.Screen name="settings" options={{ headerShown: true, headerStyle: { backgroundColor: '#FFFFFF', elevation: 0, shadowOpacity: 0, borderBottomWidth: 0.5, borderBottomColor: '#EBEBEB' } as any, headerTintColor: '#222222', headerTitleStyle: { fontWeight: '600', fontSize: 17 }, title: 'Settings' }} />
       </Stack>
     </QueryClientProvider>
   );

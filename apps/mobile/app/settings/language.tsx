@@ -39,15 +39,15 @@ export default function LanguageScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  title: { fontSize: 16, fontWeight: '700', color: '#888', padding: 16, textTransform: 'uppercase', letterSpacing: 0.5 },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  title: { fontSize: 12, fontWeight: '700', color: '#717171', padding: 16, textTransform: 'uppercase', letterSpacing: 0.5 },
   option: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: 'white', paddingHorizontal: 20, paddingVertical: 16,
-    borderBottomWidth: 1, borderColor: '#F5F5F5',
+    backgroundColor: 'white', paddingHorizontal: 20, paddingVertical: 18,
+    borderBottomWidth: 1, borderColor: '#EBEBEB',
   },
   flag: { fontSize: 28 },
   langInfo: { flex: 1 },
-  nativeName: { fontSize: 16, fontWeight: '600', color: '#1A1A2E' },
-  langName: { fontSize: 13, color: '#888' },
+  nativeName: { fontSize: 16, fontWeight: '500', color: '#222222' },
+  langName: { fontSize: 13, color: '#717171' },
 });

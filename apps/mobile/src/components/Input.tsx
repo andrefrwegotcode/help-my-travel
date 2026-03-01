@@ -62,22 +62,22 @@ export function Input({ label, error, icon, isPassword, style, ...props }: Input
 }
 
 const styles = StyleSheet.create({
-  wrapper: { marginTop: 12 },
-  label: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: 6 },
+  wrapper: { marginTop: 16 },
+  label: { fontSize: 12, fontWeight: '500', color: colors.textSecondary, marginBottom: 6 },
   labelError: { color: colors.borderError },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderRadius: 12,
+    borderWidth: 1,
+    borderRadius: 8,
     backgroundColor: colors.white,
   },
   icon: { marginLeft: 14 },
   input: {
     flex: 1,
     paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
+    paddingVertical: 14,
+    fontSize: 16,
     color: colors.text,
   },
   inputWithIcon: { paddingLeft: 8 },

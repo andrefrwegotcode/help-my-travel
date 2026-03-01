@@ -56,7 +56,7 @@ export default function LoginScreen() {
     >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
-          <Logo size="medium" showText showTagline />
+          <Logo size="medium" showText showTagline dark />
         </View>
 
         <View style={styles.card}>
@@ -103,21 +103,15 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.primary },
-  scroll: { flexGrow: 1, justifyContent: 'center', padding: 20 },
-  header: { alignItems: 'center', marginBottom: 32 },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  scroll: { flexGrow: 1, justifyContent: 'center', padding: 24 },
+  header: { alignItems: 'center', marginBottom: 40 },
   card: {
-    backgroundColor: colors.white,
-    borderRadius: 24,
     padding: 24,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 5,
   },
-  title: { fontSize: 22, fontWeight: '700', color: colors.navy, marginBottom: 8 },
-  forgotLink: { color: colors.primary, fontSize: 13, textAlign: 'right', marginTop: 8 },
+  title: { fontSize: 26, fontWeight: '800', color: '#222222', marginBottom: 16 },
+  forgotLink: { color: '#222222', fontSize: 13, textAlign: 'right', marginTop: 8, textDecorationLine: 'underline' },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
   footerText: { color: colors.textSecondary, fontSize: 14 },
-  footerLink: { color: colors.primary, fontSize: 14, fontWeight: '700' },
+  footerLink: { color: colors.primary, fontSize: 14, fontWeight: '600' },
 });
