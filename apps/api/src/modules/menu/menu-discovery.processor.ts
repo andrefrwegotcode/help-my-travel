@@ -124,35 +124,38 @@ export class MenuDiscoveryProcessor {
       }
       await job.progress(60);
 
-      // Step 4.5: Try Google Maps menu URL (from the "Menu" tab on Google Maps)
-      // This can be a Google Drive PDF, external menu URL, etc.
+      // Step 4.5: Try Google Maps data via Places API v1 (New)
+      // Gets menu URL from googleMapsLinks and additional photos
+      let v1Photos: Array<{ name: string; widthPx: number; heightPx: number }> = [];
       if (!rawText) {
-        this.logger.log(`[Job ${job.id}] Step 4.5: Trying Google Maps menu URL`);
-        const menuUrl = await this.placesService.getGoogleMapsMenuUrl(placeId);
-        if (menuUrl) {
-          this.logger.log(`[Job ${job.id}] Found Google Maps menu URL: ${menuUrl}`);
-          // Try to fetch it (could be PDF or HTML)
-          if (menuUrl.toLowerCase().includes('.pdf') || menuUrl.includes('drive.google.com')) {
-            // Google Drive links need conversion to direct download
-            let downloadUrl = menuUrl;
-            const driveMatch = menuUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        this.logger.log(`[Job ${job.id}] Step 4.5: Trying Places API v1 (menu URL + photos)`);
+        const gmData = await this.placesService.getGoogleMapsMenuData(placeId);
+        v1Photos = gmData.photos;
+
+        if (gmData.menuUrl) {
+          this.logger.log(`[Job ${job.id}] Found menu URL from Places API v1: ${gmData.menuUrl}`);
+          // Try PDF first (Google Drive or direct PDF)
+          if (gmData.menuUrl.toLowerCase().includes('.pdf') || gmData.menuUrl.includes('drive.google.com')) {
+            let downloadUrl = gmData.menuUrl;
+            const driveMatch = gmData.menuUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
             if (driveMatch) {
               downloadUrl = `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
             }
             const pdfResult = await this.fetchPdf(downloadUrl);
             if (pdfResult) {
               rawText = pdfResult.text;
-              sourceUrl = menuUrl;
+              sourceUrl = gmData.menuUrl;
               source = 'GOOGLE';
             }
           }
+          // Try as website if not PDF or PDF failed
           if (!rawText) {
-            const webResult = await this.fetchWebsite(menuUrl);
-            if (webResult) {
-              rawText = webResult.text;
-              sourceUrl = menuUrl;
+            const webMenuResult = await this.fetchWebsite(gmData.menuUrl);
+            if (webMenuResult) {
+              rawText = webMenuResult.text;
+              sourceUrl = gmData.menuUrl;
               source = 'GOOGLE';
-              foodImages = webResult.images || [];
+              foodImages = webMenuResult.images || [];
             }
           }
         }
@@ -160,11 +163,24 @@ export class MenuDiscoveryProcessor {
       await job.progress(65);
 
       // Step 5: If no menu text found, try Google Places photos with Gemini Vision OCR
-      if (!rawText && this.gemini && place.photos && place.photos.length > 0) {
-        this.logger.log(`[Job ${job.id}] Step 5: Trying Google Places photos OCR (${place.photos.length} photos available)`);
-        const photosResult = await this.tryGooglePlacesPhotosOCR(place.photos, language);
+      // Use BOTH legacy API photos AND Places API v1 photos for maximum coverage
+      if (!rawText && this.gemini) {
+        const legacyPhotos = place.photos || [];
+        this.logger.log(`[Job ${job.id}] Step 5: Trying photo OCR — ${legacyPhotos.length} legacy photos, ${v1Photos.length} v1 photos`);
+
+        // Try legacy photos first (already have photo references)
+        let photosResult: any[] | null = null;
+        if (legacyPhotos.length > 0) {
+          photosResult = await this.tryGooglePlacesPhotosOCR(legacyPhotos, language);
+        }
+
+        // If legacy photos didn't yield results, try v1 photos
+        if (!photosResult && v1Photos.length > 0) {
+          this.logger.log(`[Job ${job.id}] Legacy photos yielded nothing, trying ${v1Photos.length} v1 photos`);
+          photosResult = await this.tryPlacesV1PhotosOCR(v1Photos, language);
+        }
+
         if (photosResult) {
-          // Google Photos OCR returns already-translated items, skip normal parse+translate
           const expiresAt = new Date(Date.now() + MENU_CACHE_TTL_HOURS * 60 * 60 * 1000);
           const rawTextFromPhotos = photosResult.map(i => `${i.nameOriginal || i.name} ${i.price || ''}`).join('\n');
           await this.prisma.menuCache.upsert({
@@ -173,7 +189,7 @@ export class MenuDiscoveryProcessor {
             update: { rawText: rawTextFromPhotos, items: photosResult as any, source: 'PHOTO_OCR', sourceUrl: null, expiresAt, fetchedAt: new Date() },
           });
           await job.progress(100);
-          this.logger.log(`[Job ${job.id}] Done — ${photosResult.length} items from Google Places photos OCR`);
+          this.logger.log(`[Job ${job.id}] Done — ${photosResult.length} items from photo OCR`);
           return { success: true, itemCount: photosResult.length, source: 'PHOTO_OCR' };
         }
       }
@@ -524,6 +540,98 @@ Return ONLY a valid JSON array, no markdown:
     }
 
     // Deduplicate by name
+    const seen = new Set<string>();
+    const unique = allItems.filter(item => {
+      const key = (item.nameOriginal || item.name).toLowerCase().trim();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    return unique.length > 0 ? unique : null;
+  }
+
+  /**
+   * OCR photos obtained via Places API v1 (New).
+   * These photos use resource names instead of photo references.
+   */
+  private async tryPlacesV1PhotosOCR(
+    photos: Array<{ name: string; widthPx: number; heightPx: number }>,
+    language: string,
+  ): Promise<any[] | null> {
+    if (!this.gemini) return null;
+
+    const model = this.gemini.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+    const prompt = `Analyze this image. Is it a restaurant menu or food menu board?
+If YES, extract ALL menu items you can see. For each item provide:
+- name: the dish name exactly as written (original language)
+- nameTranslated: the dish name translated to ${language}
+- price: the price if visible (e.g., "12.50 €"), or null
+- category: the section/category (e.g., "Starters", "Main Courses", "Menú del Día"), or null
+- description: a brief description (max 15 words) in ${language}, or null
+
+IMPORTANT: If this is a "menú del día" (fixed-price daily menu with multiple courses), note the fixed price and mark each item with its course (Primer plato, Segundo plato, Postre, etc.) in the description.
+
+If this is NOT a menu image (e.g., restaurant interior, food close-up, exterior), return exactly: []
+
+Return ONLY a valid JSON array, no markdown:
+[{"name": "original name", "nameTranslated": "translated name", "price": "12.50 €", "category": "Category", "description": "description"}]`;
+
+    const processPhoto = async (photo: { name: string }): Promise<any[]> => {
+      try {
+        const photoUrl = this.placesService.getPhotoUrlV1(photo.name, 1200);
+        this.logger.log(`Fetching v1 photo: ${photo.name}`);
+        const imgRes = await axios.get(photoUrl, {
+          responseType: 'arraybuffer',
+          timeout: 10000,
+          maxContentLength: 15 * 1024 * 1024,
+          maxRedirects: 5,
+        });
+
+        const base64 = Buffer.from(imgRes.data).toString('base64');
+        const contentType = imgRes.headers['content-type'] || 'image/jpeg';
+
+        const result = await model.generateContent([
+          prompt,
+          { inlineData: { mimeType: contentType, data: base64 } },
+        ]);
+
+        const responseText = result.response.text();
+        const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) return [];
+
+        const parsed = JSON.parse(jsonMatch[0]);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (err) {
+        this.logger.warn(`Failed to OCR v1 photo ${photo.name}: ${err}`);
+        return [];
+      }
+    };
+
+    const results = await Promise.allSettled(photos.map(processPhoto));
+
+    const allItems: any[] = [];
+    for (const result of results) {
+      if (result.status !== 'fulfilled' || result.value.length === 0) continue;
+      this.logger.log(`V1 photo OCR found ${result.value.length} items`);
+      for (const item of result.value) {
+        allItems.push({
+          id: `item-${allItems.length}`,
+          name: item.nameTranslated || item.name || 'Unknown',
+          nameOriginal: item.name || 'Unknown',
+          description: item.description || null,
+          descriptionOriginal: null,
+          ingredients: null,
+          price: item.price || null,
+          priceValue: item.price ? parseFloat(String(item.price).replace(/[^0-9.,]/g, '').replace(',', '.')) || null : null,
+          currency: item.price ? this.detectCurrency(String(item.price)) : null,
+          category: item.category || null,
+          imageUrl: null,
+        });
+      }
+    }
+
     const seen = new Set<string>();
     const unique = allItems.filter(item => {
       const key = (item.nameOriginal || item.name).toLowerCase().trim();

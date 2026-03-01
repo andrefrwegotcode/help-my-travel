@@ -155,13 +155,16 @@ export class PlacesService {
   }
 
   /**
-   * Fetch the Google Maps menu URL via Places API v1 (New).
-   * This returns the URL that appears in the "Menu" tab on Google Maps,
-   * which can be a Google Drive PDF, an external menu URL, etc.
+   * Fetch menu-related URLs and extra photos via Places API v1 (New).
+   * Tries googleMapsLinks, websiteUri, and returns additional photos
+   * that may include menu photos not returned by the legacy API.
    */
-  async getGoogleMapsMenuUrl(placeId: string): Promise<string | null> {
+  async getGoogleMapsMenuData(placeId: string): Promise<{
+    menuUrl: string | null;
+    photos: Array<{ name: string; widthPx: number; heightPx: number }>;
+  }> {
     const apiKey = this.config.get<string>('GOOGLE_PLACES_API_KEY');
-    if (!apiKey) return null;
+    if (!apiKey) return { menuUrl: null, photos: [] };
 
     try {
       const res = await axios.get(
@@ -169,22 +172,42 @@ export class PlacesService {
         {
           headers: {
             'X-Goog-Api-Key': apiKey,
-            'X-Goog-FieldMask': 'googleMapsMenuUri',
+            'X-Goog-FieldMask': 'websiteUri,googleMapsLinks,photos',
           },
-          timeout: 5000,
+          timeout: 8000,
         },
       );
 
-      const menuUri = res.data?.googleMapsMenuUri;
-      if (menuUri) {
-        this.logger.log(`Found Google Maps menu URL for ${placeId}: ${menuUri}`);
-        return menuUri;
+      const data = res.data;
+      this.logger.log(`Places API v1 for ${placeId}: websiteUri=${data.websiteUri || 'none'}, photos=${data.photos?.length || 0}, googleMapsLinks=${JSON.stringify(data.googleMapsLinks || {})}`);
+
+      // Try to find a menu URL from googleMapsLinks
+      let menuUrl: string | null = null;
+      if (data.googleMapsLinks?.menuUri) {
+        menuUrl = data.googleMapsLinks.menuUri;
+        this.logger.log(`Found menuUri in googleMapsLinks: ${menuUrl}`);
       }
-      return null;
+
+      // Extract v1 photos (different from legacy API photos)
+      const photos = (data.photos || []).map((p: any) => ({
+        name: p.name,
+        widthPx: p.widthPx || 0,
+        heightPx: p.heightPx || 0,
+      }));
+
+      return { menuUrl, photos };
     } catch (err) {
-      this.logger.warn(`Failed to fetch Google Maps menu URL: ${err}`);
-      return null;
+      this.logger.warn(`Failed to fetch Places API v1 data: ${err}`);
+      return { menuUrl: null, photos: [] };
     }
+  }
+
+  /**
+   * Get a photo URL from Places API v1 (New) using the photo resource name.
+   */
+  getPhotoUrlV1(photoName: string, maxWidthPx = 1200): string {
+    const apiKey = this.config.get<string>('GOOGLE_PLACES_API_KEY');
+    return `https://places.googleapis.com/v1/${photoName}/media?key=${apiKey}&maxWidthPx=${maxWidthPx}`;
   }
 
   getPhotoUrl(photoReference: string, maxWidth = 400): string {
