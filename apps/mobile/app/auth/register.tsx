@@ -1,11 +1,16 @@
 import { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
-  KeyboardAvoidingView, Platform, Alert, ScrollView,
+  View, Text, StyleSheet, KeyboardAvoidingView, Platform, Alert, ScrollView,
 } from 'react-native';
 import { router, Link } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../src/store/auth.store';
+import { Logo } from '../../src/components/Logo';
+import { Input } from '../../src/components/Input';
+import { Button } from '../../src/components/Button';
+import { colors } from '../../src/theme/colors';
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function RegisterScreen() {
   const { t } = useTranslation();
@@ -13,23 +18,46 @@ export default function RegisterScreen() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string | undefined>>({});
+
+  const clearError = (field: string) => {
+    if (errors[field]) setErrors(e => ({ ...e, [field]: undefined }));
+  };
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!name.trim()) {
+      newErrors.name = t('validation.required', { field: t('auth.name') });
+    }
+    if (!email.trim()) {
+      newErrors.email = t('validation.required', { field: t('auth.email') });
+    } else if (!EMAIL_REGEX.test(email)) {
+      newErrors.email = t('validation.invalidEmail');
+    }
+    if (!password) {
+      newErrors.password = t('validation.required', { field: t('auth.password') });
+    } else if (password.length < 8) {
+      newErrors.password = t('validation.minLength', { field: t('auth.password'), min: 8 });
+    }
+    if (!confirmPassword) {
+      newErrors.confirmPassword = t('validation.required', { field: t('auth.confirmPassword') });
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = t('validation.passwordMismatch');
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleRegister = async () => {
-    if (!name || !email || !password) {
-      Alert.alert(t('common.error'), 'Please fill in all fields.');
-      return;
-    }
-    if (password.length < 8) {
-      Alert.alert(t('common.error'), 'Password must be at least 8 characters.');
-      return;
-    }
+    if (!validate()) return;
     setLoading(true);
     try {
-      await register({ name, email, password });
+      await register({ name: name.trim(), email: email.trim(), password });
       router.replace('/(tabs)/map');
     } catch (err: any) {
-      Alert.alert(t('common.error'), err?.response?.data?.message || 'Registration failed.');
+      Alert.alert(t('common.error'), err?.response?.data?.message || t('auth.registerFailed'));
     } finally {
       setLoading(false);
     }
@@ -39,36 +67,53 @@ export default function RegisterScreen() {
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
-          <Text style={styles.appName}>Help My Travel</Text>
+          <Logo size="small" showText />
         </View>
 
         <View style={styles.card}>
           <Text style={styles.title}>{t('auth.createAccount')}</Text>
 
-          <Text style={styles.label}>{t('auth.name')}</Text>
-          <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="John Doe" />
-
-          <Text style={styles.label}>{t('auth.email')}</Text>
-          <TextInput
-            style={styles.input} value={email} onChangeText={setEmail}
-            placeholder="you@example.com" keyboardType="email-address" autoCapitalize="none"
+          <Input
+            label={t('auth.name')}
+            icon="person-outline"
+            value={name}
+            onChangeText={(v) => { setName(v); clearError('name'); }}
+            placeholder="John Doe"
+            error={errors.name}
           />
 
-          <Text style={styles.label}>{t('auth.password')}</Text>
-          <TextInput
-            style={styles.input} value={password} onChangeText={setPassword}
-            placeholder="Min. 8 characters" secureTextEntry
+          <Input
+            label={t('auth.email')}
+            icon="mail-outline"
+            value={email}
+            onChangeText={(v) => { setEmail(v); clearError('email'); }}
+            placeholder="you@example.com"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            error={errors.email}
           />
 
-          <TouchableOpacity
-            style={[styles.btn, loading && styles.btnDisabled]}
-            onPress={handleRegister}
-            disabled={loading}
-          >
-            <Text style={styles.btnText}>
-              {loading ? t('common.loading') : t('auth.register')}
-            </Text>
-          </TouchableOpacity>
+          <Input
+            label={t('auth.password')}
+            icon="lock-closed-outline"
+            value={password}
+            onChangeText={(v) => { setPassword(v); clearError('password'); }}
+            placeholder={t('validation.minLength', { field: t('auth.password'), min: 8 })}
+            isPassword
+            error={errors.password}
+          />
+
+          <Input
+            label={t('auth.confirmPassword')}
+            icon="lock-closed-outline"
+            value={confirmPassword}
+            onChangeText={(v) => { setConfirmPassword(v); clearError('confirmPassword'); }}
+            placeholder="••••••••"
+            isPassword
+            error={errors.confirmPassword}
+          />
+
+          <Button title={loading ? t('common.loading') : t('auth.register')} onPress={handleRegister} loading={loading} />
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>{t('auth.hasAccount')} </Text>
@@ -81,21 +126,12 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FF6B35' },
+  container: { flex: 1, backgroundColor: colors.primary },
   scroll: { flexGrow: 1, justifyContent: 'center', padding: 20 },
   header: { alignItems: 'center', marginBottom: 24 },
-  appName: { color: 'white', fontSize: 24, fontWeight: '800', letterSpacing: -0.5 },
-  card: { backgroundColor: 'white', borderRadius: 24, padding: 24 },
-  title: { fontSize: 22, fontWeight: '700', color: '#1A1A2E', marginBottom: 16 },
-  label: { fontSize: 13, fontWeight: '600', color: '#666', marginBottom: 6, marginTop: 12 },
-  input: {
-    borderWidth: 1.5, borderColor: '#E0E0E0', borderRadius: 12,
-    paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: '#1A1A2E',
-  },
-  btn: { backgroundColor: '#FF6B35', borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginTop: 20 },
-  btnDisabled: { opacity: 0.6 },
-  btnText: { color: 'white', fontSize: 16, fontWeight: '700' },
+  card: { backgroundColor: colors.white, borderRadius: 24, padding: 24 },
+  title: { fontSize: 22, fontWeight: '700', color: colors.navy, marginBottom: 8 },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
-  footerText: { color: '#666', fontSize: 14 },
-  footerLink: { color: '#FF6B35', fontSize: 14, fontWeight: '700' },
+  footerText: { color: colors.textSecondary, fontSize: 14 },
+  footerLink: { color: colors.primary, fontSize: 14, fontWeight: '700' },
 });

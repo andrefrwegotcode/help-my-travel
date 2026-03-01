@@ -14,7 +14,7 @@ export default function RestaurantScreen() {
   const { placeId } = useLocalSearchParams<{ placeId: string }>();
   const { t } = useTranslation();
   const { user } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<'details' | 'reviews' | 'photos'>('details');
+  const [activeTab, setActiveTab] = useState<'details'>('details');
 
   const { data: place, isLoading } = useQuery({
     queryKey: ['place', placeId, user?.language],
@@ -22,18 +22,6 @@ export default function RestaurantScreen() {
       const res = await api.get(`/places/${placeId}`, { params: { language: user?.language } });
       return res.data;
     },
-  });
-
-  const { data: reviews } = useQuery({
-    queryKey: ['reviews', placeId],
-    queryFn: async () => (await api.get(`/reviews/${placeId}`)).data,
-    enabled: activeTab === 'reviews',
-  });
-
-  const { data: photos } = useQuery({
-    queryKey: ['photos', placeId],
-    queryFn: async () => (await api.get(`/photos/${placeId}`)).data,
-    enabled: activeTab === 'photos',
   });
 
   if (isLoading) {
@@ -93,72 +81,18 @@ export default function RestaurantScreen() {
           <Ionicons name="chevron-forward" size={18} color="white" />
         </TouchableOpacity>
 
-        {/* Tabs */}
-        <View style={styles.tabs}>
-          {(['details', 'reviews', 'photos'] as const).map((tab) => (
-            <TouchableOpacity
-              key={tab}
-              style={[styles.tab, activeTab === tab && styles.tabActive]}
-              onPress={() => setActiveTab(tab)}
-            >
-              <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
-                {t(`restaurant.${tab}`)}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
         <ScrollView style={styles.content}>
-          {activeTab === 'details' && (
-            <View style={styles.section}>
-              {place?.website && (
-                <View style={styles.detailRow}>
-                  <Ionicons name="globe-outline" size={16} color="#666" />
-                  <Text style={styles.detailText}>{place.website}</Text>
-                </View>
-              )}
-              {place?.openingHours?.weekdayText?.map((line: string, i: number) => (
-                <Text key={i} style={styles.hoursText}>{line}</Text>
-              ))}
-            </View>
-          )}
-
-          {activeTab === 'reviews' && (
-            <View>
-              <TouchableOpacity
-                style={styles.addReviewBtn}
-                onPress={() => router.push(`/restaurant/${placeId}/review`)}
-              >
-                <Ionicons name="star-outline" size={18} color="#FF6B35" />
-                <Text style={styles.addReviewText}>{t('restaurant.addReview')}</Text>
-              </TouchableOpacity>
-              {reviews?.map((review: any) => (
-                <View key={review.id} style={styles.reviewCard}>
-                  <View style={styles.reviewHeader}>
-                    <Text style={styles.reviewUser}>{review.user.name || 'Anonymous'}</Text>
-                    <View style={styles.stars}>
-                      {Array.from({ length: review.rating }).map((_, i) => (
-                        <Ionicons key={i} name="star" size={12} color="#FF6B35" />
-                      ))}
-                    </View>
-                  </View>
-                  {review.comment && <Text style={styles.reviewComment}>{review.comment}</Text>}
-                </View>
-              ))}
-            </View>
-          )}
-
-          {activeTab === 'photos' && (
-            <View>
-              <TouchableOpacity
-                style={styles.addReviewBtn}
-                onPress={() => router.push(`/restaurant/${placeId}/photos`)}
-              >
-                <Ionicons name="camera-outline" size={18} color="#FF6B35" />
-                <Text style={styles.addReviewText}>{t('restaurant.uploadPhotos')}</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+          <View style={styles.section}>
+            {place?.website && (
+              <View style={styles.detailRow}>
+                <Ionicons name="globe-outline" size={16} color="#666" />
+                <Text style={styles.detailText}>{place.website}</Text>
+              </View>
+            )}
+            {place?.openingHours?.weekdayText?.map((line: string, i: number) => (
+              <Text key={i} style={styles.hoursText}>{line}</Text>
+            ))}
+          </View>
         </ScrollView>
       </View>
     </>

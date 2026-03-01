@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, UserPlus, Trash2, Shield, ShieldOff } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { adminApi } from '../../lib/api';
 import { Sidebar } from '../../components/Sidebar';
 
@@ -34,19 +35,21 @@ export default function UsersPage() {
 
   const createUser = useMutation({
     mutationFn: (dto: typeof form) => adminApi.post('/admin/users', dto),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'users'] }); setShowModal(false); setForm({ name: '', email: '', password: '', role: 'USER' }); setFormError(''); setFieldErrors({}); },
-    onError: (e: any) => setFormError(e?.response?.data?.message || 'Failed to create user'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'users'] }); setShowModal(false); setForm({ name: '', email: '', password: '', role: 'USER' }); setFormError(''); setFieldErrors({}); toast.success('User created successfully'); },
+    onError: (e: any) => { setFormError(e?.response?.data?.message || 'Failed to create user'); toast.error('Failed to create user'); },
   });
 
   const deleteUser = useMutation({
     mutationFn: (id: string) => adminApi.delete(`/admin/users/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'users'] }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'users'] }); toast.success('User deleted'); },
+    onError: () => toast.error('Failed to delete user'),
   });
 
   const toggleRole = useMutation({
     mutationFn: ({ id, role }: { id: string; role: 'USER' | 'ADMIN' }) =>
       adminApi.patch(`/admin/users/${id}/role`, { role }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'users'] }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'users'] }); toast.success('Role updated'); },
+    onError: () => toast.error('Failed to update role'),
   });
 
   return (

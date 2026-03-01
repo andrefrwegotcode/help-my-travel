@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   View, Text, ScrollView, TextInput, TouchableOpacity,
-  StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
+  StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, Alert,
 } from 'react-native';
 import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +14,7 @@ export default function CommunicateScreen() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
 
+  const scrollViewRef = useRef<ScrollView>(null);
   const [sender, setSender] = useState<ChatSender>('customer');
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -46,8 +47,9 @@ export default function CommunicateScreen() {
 
       setMessages((prev) => [...prev, msg]);
       setInputText('');
-    } catch {
-      // Handle error
+      setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+    } catch (err: any) {
+      Alert.alert(t('common.error'), err?.response?.data?.message || t('communicate.translationFailed'));
     } finally {
       setLoading(false);
     }
@@ -87,7 +89,7 @@ export default function CommunicateScreen() {
         </View>
 
         {/* Messages */}
-        <ScrollView style={styles.messages} contentContainerStyle={{ padding: 12, gap: 8 }}>
+        <ScrollView ref={scrollViewRef} style={styles.messages} contentContainerStyle={{ padding: 12, gap: 8 }}>
           {messages.length === 0 && (
             <View style={styles.emptyMessages}>
               <Ionicons name="chatbubbles-outline" size={48} color="#CCC" />

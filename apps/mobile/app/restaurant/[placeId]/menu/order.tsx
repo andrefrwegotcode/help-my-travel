@@ -1,19 +1,22 @@
 import { useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  TextInput, Alert, Clipboard,
+  TextInput, Alert, Platform,
 } from 'react-native';
+import * as ExpoClipboard from 'expo-clipboard';
 import { useLocalSearchParams, router, Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../../../src/services/api';
 import { useOrderStore } from '../../../../src/store/order.store';
+import { useAuthStore } from '../../../../src/store/auth.store';
 import { useQuery } from '@tanstack/react-query';
 
 export default function OrderScreen() {
   const { placeId } = useLocalSearchParams<{ placeId: string }>();
   const { t } = useTranslation();
   const { items, clearOrder, totalPrice } = useOrderStore();
+  const { user } = useAuthStore();
   const [tableNumber, setTableNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [orderText, setOrderText] = useState('');
@@ -34,7 +37,7 @@ export default function OrderScreen() {
       const res = await api.post('/order/generate', {
         placeId,
         placeName: place?.name || 'Restaurant',
-        placeLanguage: 'it', // Could be detected from place location
+        placeLanguage: place?.language || user?.language || 'en',
         items: items.map((i) => ({ menuItem: i.menuItem, quantity: i.quantity })),
         tableNumber: tableNumber || undefined,
         notes: notes || undefined,
@@ -48,7 +51,7 @@ export default function OrderScreen() {
   };
 
   const copyOrder = async () => {
-    await Clipboard.setString(orderText);
+    await ExpoClipboard.setStringAsync(orderText);
     Alert.alert(t('order.orderCopied'));
   };
 
@@ -156,7 +159,7 @@ const styles = StyleSheet.create({
   generateBtnText: { color: 'white', fontSize: 16, fontWeight: '700' },
   orderTextBox: { backgroundColor: 'white', borderRadius: 16, padding: 16 },
   orderTextLabel: { fontSize: 13, fontWeight: '700', color: '#667EEA', marginBottom: 8, textTransform: 'uppercase' },
-  orderText: { fontSize: 15, color: '#1A1A2E', lineHeight: 22, fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace' }) },
+  orderText: { fontSize: 15, color: '#1A1A2E', lineHeight: 22, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' },
   orderActions: { flexDirection: 'row', gap: 8, marginTop: 16 },
   actionBtn: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
@@ -165,5 +168,3 @@ const styles = StyleSheet.create({
   actionBtnText: { color: '#FF6B35', fontWeight: '600', fontSize: 13 },
 });
 
-// Missing Platform import
-import { Platform } from 'react-native';

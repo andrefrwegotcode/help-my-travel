@@ -25,6 +25,8 @@ export default function RootLayout() {
         <Stack.Screen name="index" />
         <Stack.Screen name="auth" />
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="restaurant" />
+        <Stack.Screen name="settings" options={{ headerShown: true, headerStyle: { backgroundColor: '#FF6B35' }, headerTintColor: 'white', title: 'Settings' }} />
       </Stack>
     </QueryClientProvider>
   );

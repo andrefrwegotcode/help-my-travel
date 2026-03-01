@@ -65,6 +65,9 @@ importers:
       react-dom:
         specifier: ^19.0.0
         version: 19.2.4(react@19.2.4)
+      react-hot-toast:
+        specifier: ^2.6.0
+        version: 2.6.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       recharts:
         specifier: ^2.15.0
         version: 2.15.4(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -292,6 +295,9 @@ importers:
       expo-camera:
         specifier: ~17.0.10
         version: 17.0.10(expo@54.0.33)(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
+      expo-clipboard:
+        specifier: ^55.0.8
+        version: 55.0.8(expo@54.0.33)(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
       expo-constants:
         specifier: ~18.0.13
         version: 18.0.13(expo@54.0.33)(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))
@@ -4519,6 +4525,13 @@ packages:
       react-native-web:
         optional: true
 
+  expo-clipboard@55.0.8:
+    resolution: {integrity: sha512-s0Hkop+dc6m09LwzUAWweNI0gzLAaX5CgEGR8TMdOdSPKTPc2rCl8h8Ji/cUNM1wYoJQ4Wysa15E8If/Vlu7WA==}
+    peerDependencies:
+      expo: '*'
+      react: '*'
+      react-native: '*'
+
   expo-constants@18.0.13:
     resolution: {integrity: sha512-FnZn12E1dRYKDHlAdIyNFhBurKTS3F9CrfrBDJI5m3D7U17KBHMQ6JEfYlSj7LG7t+Ulr+IKaj58L1k5gBwTcQ==}
     peerDependencies:
@@ -4951,6 +4964,11 @@ packages:
   globalthis@1.0.4:
     resolution: {integrity: sha512-DpLKbNU4WylpxJykQujfCcwYWiV/Jhm50Goo0wrVILAv5jOr9d+H+UR3PhSCD2rCCEIg0uc+G+muBTwD54JhDQ==}
     engines: {node: '>= 0.4'}
+
+  goober@2.1.18:
+    resolution: {integrity: sha512-2vFqsaDVIT9Gz7N6kAL++pLpp41l3PfDuusHcjnGLfR6+huZkl6ziX+zgVC3ZxpqWhzH6pyDdGrCeDhMIvwaxw==}
+    peerDependencies:
+      csstype: ^3.0.10
 
   google-auth-library@9.15.1:
     resolution: {integrity: sha512-Jb6Z0+nvECVz+2lzSMt9u98UsoakXxA2HGHMCxh+so3n90XgYWkq5dur19JAJV7ONiJY22yBTyJB1TSkvPq9Ng==}
@@ -6667,6 +6685,13 @@ packages:
     engines: {node: '>=10'}
     peerDependencies:
       react: '>=17.0.0'
+
+  react-hot-toast@2.6.0:
+    resolution: {integrity: sha512-bH+2EBMZ4sdyou/DPrfgIouFpcRLCJ+HoCA32UoAYHn6T3Ur5yfcDCeSr5mwldl6pFOsiocmrXMuoCJ1vV8bWg==}
+    engines: {node: '>=10'}
+    peerDependencies:
+      react: '>=16'
+      react-dom: '>=16'
 
   react-i18next@15.7.4:
     resolution: {integrity: sha512-nyU8iKNrI5uDJch0z9+Y5XEr34b0wkyYj3Rp+tfbahxtlswxSCjcUL9H0nqXo9IR3/t5Y5PKIA3fx3MfUyR9Xw==}
@@ -13481,6 +13506,12 @@ snapshots:
       react: 19.1.0
       react-native: 0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0)
 
+  expo-clipboard@55.0.8(expo@54.0.33)(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0):
+    dependencies:
+      expo: 54.0.33(@babel/core@7.29.0)(@expo/metro-runtime@6.1.2)(expo-router@6.0.23)(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
+      react: 19.1.0
+      react-native: 0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0)
+
   expo-constants@18.0.13(expo@54.0.33)(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0)):
     dependencies:
       '@expo/config': 12.0.13
@@ -14035,6 +14066,10 @@ snapshots:
     dependencies:
       define-properties: 1.2.1
       gopd: 1.2.0
+
+  goober@2.1.18(csstype@3.2.3):
+    dependencies:
+      csstype: 3.2.3
 
   google-auth-library@9.15.1:
     dependencies:
@@ -16086,6 +16121,13 @@ snapshots:
   react-freeze@1.0.4(react@19.1.0):
     dependencies:
       react: 19.1.0
+
+  react-hot-toast@2.6.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+    dependencies:
+      csstype: 3.2.3
+      goober: 2.1.18(csstype@3.2.3)
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
 
   react-i18next@15.7.4(i18next@24.2.3(typescript@5.9.3))(react-dom@19.1.0(react@19.1.0))(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(typescript@5.9.3):
     dependencies:

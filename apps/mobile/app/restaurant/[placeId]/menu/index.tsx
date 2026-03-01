@@ -95,13 +95,37 @@ export default function MenuScreen() {
 
   if (status === 'error') {
     return (
-      <View style={styles.centered}>
-        <Ionicons name="sad-outline" size={64} color="#CCC" />
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryBtn} onPress={loadMenu}>
-          <Text style={styles.retryBtnText}>{t('common.retry')}</Text>
-        </TouchableOpacity>
-      </View>
+      <>
+        <Stack.Screen options={{ title: t('menu.title'), headerStyle: { backgroundColor: '#FF6B35' }, headerTintColor: 'white' }} />
+        <View style={styles.centered}>
+          <Ionicons name="restaurant-outline" size={64} color="#CCC" />
+          <Text style={styles.errorTitle}>{t('menu.notFound')}</Text>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryBtn} onPress={loadMenu}>
+            <Ionicons name="refresh" size={18} color="white" />
+            <Text style={styles.retryBtnText}>{t('common.retry')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+            <Text style={styles.backBtnText}>{t('common.back')}</Text>
+          </TouchableOpacity>
+        </View>
+      </>
+    );
+  }
+
+  if (status === 'done' && (!menu || !menu.categories || menu.categories.length === 0)) {
+    return (
+      <>
+        <Stack.Screen options={{ title: t('menu.title'), headerStyle: { backgroundColor: '#FF6B35' }, headerTintColor: 'white' }} />
+        <View style={styles.centered}>
+          <Ionicons name="document-text-outline" size={64} color="#CCC" />
+          <Text style={styles.errorTitle}>{t('menu.empty')}</Text>
+          <Text style={styles.errorText}>{t('menu.emptyDescription')}</Text>
+          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+            <Text style={styles.backBtnText}>{t('common.back')}</Text>
+          </TouchableOpacity>
+        </View>
+      </>
     );
   }
 
@@ -197,9 +221,15 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, gap: 16 },
   loadingTitle: { fontSize: 18, fontWeight: '700', color: '#1A1A2E' },
   loadingSubtitle: { color: '#888', fontSize: 14, textAlign: 'center' },
-  errorText: { color: '#666', fontSize: 15, textAlign: 'center' },
-  retryBtn: { backgroundColor: '#FF6B35', borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12 },
+  errorTitle: { fontSize: 18, fontWeight: '700', color: '#1A1A2E', textAlign: 'center' },
+  errorText: { color: '#888', fontSize: 14, textAlign: 'center', lineHeight: 20 },
+  retryBtn: {
+    backgroundColor: '#FF6B35', borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+  },
   retryBtnText: { color: 'white', fontWeight: '700' },
+  backBtn: { paddingHorizontal: 24, paddingVertical: 10 },
+  backBtnText: { color: '#888', fontWeight: '600', fontSize: 14 },
   sourceBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     backgroundColor: '#EEF2FF', padding: 10, paddingHorizontal: 16,

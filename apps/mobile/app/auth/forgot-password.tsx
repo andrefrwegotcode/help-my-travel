@@ -1,20 +1,42 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import {
+  View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView,
+} from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
 import api from '../../src/services/api';
+import { Input } from '../../src/components/Input';
+import { Button } from '../../src/components/Button';
+import { colors } from '../../src/theme/colors';
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function ForgotPasswordScreen() {
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | undefined>();
+
+  const validate = () => {
+    if (!email.trim()) {
+      setError(t('validation.required', { field: t('auth.email') }));
+      return false;
+    }
+    if (!EMAIL_REGEX.test(email)) {
+      setError(t('validation.invalidEmail'));
+      return false;
+    }
+    setError(undefined);
+    return true;
+  };
 
   const handleSubmit = async () => {
-    if (!email) return;
+    if (!validate()) return;
     setLoading(true);
     try {
-      await api.post('/auth/forgot-password', { email });
+      await api.post('/auth/forgot-password', { email: email.trim() });
       setSent(true);
     } catch {
       setSent(true); // Don't reveal if email exists
@@ -27,64 +49,71 @@ export default function ForgotPasswordScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.card}>
-          <Text style={styles.icon}>📧</Text>
-          <Text style={styles.title}>Check your email</Text>
+          <View style={styles.successIcon}>
+            <Ionicons name="mail-outline" size={40} color={colors.success} />
+          </View>
+          <Text style={styles.title}>{t('auth.checkEmail')}</Text>
           <Text style={styles.desc}>{t('auth.resetEmailSent')}</Text>
-          <TouchableOpacity style={styles.btn} onPress={() => router.back()}>
-            <Text style={styles.btnText}>{t('common.back')}</Text>
-          </TouchableOpacity>
+          <Button title={t('auth.backToLogin')} onPress={() => router.back()} />
         </View>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.card}>
-        <Text style={styles.title}>{t('auth.resetPassword')}</Text>
-        <Text style={styles.desc}>Enter your email and we'll send you a reset link.</Text>
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <View style={styles.card}>
+          <View style={styles.iconCircle}>
+            <Ionicons name="key-outline" size={32} color={colors.primary} />
+          </View>
+          <Text style={styles.title}>{t('auth.resetPassword')}</Text>
+          <Text style={styles.desc}>{t('auth.resetDescription')}</Text>
 
-        <Text style={styles.label}>{t('auth.email')}</Text>
-        <TextInput
-          style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-          placeholder="you@example.com"
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
+          <Input
+            label={t('auth.email')}
+            icon="mail-outline"
+            value={email}
+            onChangeText={(v) => { setEmail(v); if (error) setError(undefined); }}
+            placeholder="you@example.com"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            error={error}
+          />
 
-        <TouchableOpacity
-          style={[styles.btn, loading && { opacity: 0.6 }]}
-          onPress={handleSubmit}
-          disabled={loading}
-        >
-          <Text style={styles.btnText}>
-            {loading ? t('common.loading') : t('auth.sendResetLink')}
-          </Text>
-        </TouchableOpacity>
+          <Button
+            title={loading ? t('common.loading') : t('auth.sendResetLink')}
+            onPress={handleSubmit}
+            loading={loading}
+          />
 
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backBtnText}>{t('common.back')}</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+          <Button
+            title={t('common.back')}
+            onPress={() => router.back()}
+            variant="ghost"
+          />
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FF6B35', justifyContent: 'center', padding: 20 },
-  card: { backgroundColor: 'white', borderRadius: 24, padding: 24 },
-  icon: { fontSize: 48, textAlign: 'center', marginBottom: 12 },
-  title: { fontSize: 22, fontWeight: '700', color: '#1A1A2E', marginBottom: 8 },
-  desc: { color: '#666', fontSize: 14, marginBottom: 16 },
-  label: { fontSize: 13, fontWeight: '600', color: '#666', marginBottom: 6 },
-  input: {
-    borderWidth: 1.5, borderColor: '#E0E0E0', borderRadius: 12,
-    paddingHorizontal: 14, paddingVertical: 12, fontSize: 15,
+  container: { flex: 1, backgroundColor: colors.primary, justifyContent: 'center', padding: 20 },
+  scroll: { flexGrow: 1, justifyContent: 'center' },
+  card: { backgroundColor: colors.white, borderRadius: 24, padding: 24 },
+  iconCircle: {
+    width: 64, height: 64, borderRadius: 32,
+    backgroundColor: '#FFF3E0',
+    justifyContent: 'center', alignItems: 'center',
+    alignSelf: 'center', marginBottom: 16,
   },
-  btn: { backgroundColor: '#FF6B35', borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginTop: 20 },
-  btnText: { color: 'white', fontSize: 16, fontWeight: '700' },
-  backBtn: { alignItems: 'center', marginTop: 16 },
-  backBtnText: { color: '#666', fontSize: 14 },
+  successIcon: {
+    width: 72, height: 72, borderRadius: 36,
+    backgroundColor: '#E8F5E9',
+    justifyContent: 'center', alignItems: 'center',
+    alignSelf: 'center', marginBottom: 16,
+  },
+  title: { fontSize: 22, fontWeight: '700', color: colors.navy, marginBottom: 8, textAlign: 'center' },
+  desc: { color: colors.textSecondary, fontSize: 14, marginBottom: 8, textAlign: 'center', lineHeight: 20 },
 });

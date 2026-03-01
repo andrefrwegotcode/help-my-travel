@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { useAuthStore } from '../src/store/auth.store';
+import { Logo } from '../src/components/Logo';
+import { colors } from '../src/theme/colors';
 
 export default function IndexScreen() {
   const { isLoading, isAuthenticated } = useAuthStore();
@@ -18,11 +20,16 @@ export default function IndexScreen() {
 
   return (
     <View style={styles.container}>
-      <ActivityIndicator size="large" color="#FF6B35" />
+      <Logo size="large" showText showTagline />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FF6B35' },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+  },
 });

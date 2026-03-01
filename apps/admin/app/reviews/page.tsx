@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Star, Trash2 } from 'lucide-react';
+import { Star, Trash2, MessageSquare } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { adminApi } from '../../lib/api';
 import { Sidebar } from '../../components/Sidebar';
 
@@ -17,7 +18,8 @@ export default function ReviewsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => adminApi.delete(`/admin/reviews/${id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'reviews'] }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['admin', 'reviews'] }); toast.success('Review deleted'); },
+    onError: () => toast.error('Failed to delete review'),
   });
 
   return (
@@ -30,6 +32,12 @@ export default function ReviewsPage() {
         <div className="space-y-4">
           {isLoading ? (
             <div className="text-center text-slate-400 py-12">Loading…</div>
+          ) : !data?.reviews?.length ? (
+            <div className="text-center py-20">
+              <MessageSquare size={48} className="mx-auto text-slate-300 mb-4" />
+              <p className="text-slate-500 font-medium">No reviews yet</p>
+              <p className="text-slate-400 text-sm mt-1">Reviews will appear here when users submit them.</p>
+            </div>
           ) : (
             data?.reviews?.map((review: any) => (
               <div key={review.id} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">

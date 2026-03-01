@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Image, Trash2 } from 'lucide-react';
+import { Image as ImageIcon, Trash2, Camera } from 'lucide-react';
+import NextImage from 'next/image';
+import toast from 'react-hot-toast';
 import { adminApi } from '../../lib/api';
 import { Sidebar } from '../../components/Sidebar';
 
@@ -17,7 +19,8 @@ export default function PhotosPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => adminApi.delete(`/admin/photos/${id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'photos'] }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['admin', 'photos'] }); toast.success('Photo deleted'); },
+    onError: () => toast.error('Failed to delete photo'),
   });
 
   return (
@@ -29,16 +32,22 @@ export default function PhotosPage() {
 
         {isLoading ? (
           <div className="text-center text-slate-400 py-12">Loading…</div>
+        ) : !data?.photos?.length ? (
+          <div className="text-center py-20">
+            <Camera size={48} className="mx-auto text-slate-300 mb-4" />
+            <p className="text-slate-500 font-medium">No photos yet</p>
+            <p className="text-slate-400 text-sm mt-1">Photos will appear here when users upload them.</p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {data?.photos?.map((photo: any) => (
               <div key={photo.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                 <div className="relative h-48 bg-slate-100">
                   {photo.url ? (
-                    <img src={photo.url} alt={photo.caption || 'Photo'} className="w-full h-full object-cover" />
+                    <NextImage src={photo.url} alt={photo.caption || 'Photo'} fill className="object-cover" unoptimized />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <Image size={40} className="text-slate-300" />
+                      <ImageIcon size={40} className="text-slate-300" />
                     </div>
                   )}
                 </div>

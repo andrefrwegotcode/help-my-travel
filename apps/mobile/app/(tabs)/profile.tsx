@@ -42,21 +42,6 @@ export default function ProfileScreen() {
           value={`${currentLanguage?.flag} ${currentLanguage?.nativeName}`}
           onPress={() => router.push('/settings/language')}
         />
-        <MenuItem
-          icon="person-outline"
-          label={t('profile.editProfile')}
-          onPress={() => router.push('/settings/account')}
-        />
-        <MenuItem
-          icon="star-outline"
-          label={t('profile.myReviews')}
-          onPress={() => {/* TODO */}}
-        />
-        <MenuItem
-          icon="images-outline"
-          label={t('profile.myPhotos')}
-          onPress={() => {/* TODO */}}
-        />
       </View>
 
       <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>

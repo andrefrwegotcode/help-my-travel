@@ -85,7 +85,10 @@ export default function DashboardPage() {
 
         {/* Chart */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-          <h2 className="text-lg font-bold text-slate-900 mb-6">Activity This Week</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-bold text-slate-900">Activity This Week</h2>
+            <span className="text-xs bg-amber-50 text-amber-600 border border-amber-200 px-2.5 py-1 rounded-full font-medium">Demo data</span>
+          </div>
           <ResponsiveContainer width="100%" height={280}>
             <AreaChart data={weeklyData}>
               <defs>

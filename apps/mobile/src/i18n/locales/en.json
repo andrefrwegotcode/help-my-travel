@@ -26,7 +26,19 @@
     "sendResetLink": "Send Reset Link",
     "resetEmailSent": "If the email exists, a reset link has been sent.",
     "welcomeBack": "Welcome back!",
-    "createAccount": "Create your account"
+    "createAccount": "Create your account",
+    "confirmPassword": "Confirm Password",
+    "loginFailed": "Login failed. Please check your credentials.",
+    "registerFailed": "Registration failed. Please try again.",
+    "checkEmail": "Check your email",
+    "backToLogin": "Back to Login",
+    "resetDescription": "Enter your email and we'll send you a reset link."
+  },
+  "validation": {
+    "required": "{{field}} is required",
+    "invalidEmail": "Please enter a valid email address",
+    "minLength": "{{field}} must be at least {{min}} characters",
+    "passwordMismatch": "Passwords do not match"
   },
   "map": {
     "title": "Nearby Restaurants",
@@ -60,6 +72,9 @@
     "categories": "Categories",
     "addToOrder": "Add",
     "noItems": "No menu items found",
+    "notFound": "Menu Not Available",
+    "empty": "No Menu Items",
+    "emptyDescription": "The menu was found but contains no items.",
     "source": {
       "WEBSITE": "From restaurant website",
       "GOOGLE": "From Google Search",

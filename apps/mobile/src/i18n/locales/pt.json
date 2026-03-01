@@ -26,7 +26,19 @@
     "sendResetLink": "Enviar link de redefinição",
     "resetEmailSent": "Se o e-mail existir, um link de redefinição foi enviado.",
     "welcomeBack": "Bem-vindo de volta!",
-    "createAccount": "Crie sua conta"
+    "createAccount": "Crie sua conta",
+    "confirmPassword": "Confirmar Senha",
+    "loginFailed": "Falha no login. Verifique suas credenciais.",
+    "registerFailed": "Falha no cadastro. Tente novamente.",
+    "checkEmail": "Verifique seu e-mail",
+    "backToLogin": "Voltar ao Login",
+    "resetDescription": "Digite seu e-mail e enviaremos um link de redefinição."
+  },
+  "validation": {
+    "required": "{{field}} é obrigatório",
+    "invalidEmail": "Por favor, insira um e-mail válido",
+    "minLength": "{{field}} deve ter pelo menos {{min}} caracteres",
+    "passwordMismatch": "As senhas não coincidem"
   },
   "map": {
     "title": "Restaurantes Próximos",
@@ -60,6 +72,9 @@
     "categories": "Categorias",
     "addToOrder": "Adicionar",
     "noItems": "Nenhum item encontrado no cardápio",
+    "notFound": "Cardápio Indisponível",
+    "empty": "Sem Itens no Cardápio",
+    "emptyDescription": "O cardápio foi encontrado mas não contém itens.",
     "source": {
       "WEBSITE": "Do site do restaurante",
       "GOOGLE": "Da busca do Google",

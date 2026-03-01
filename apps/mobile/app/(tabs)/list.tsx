@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
-  TextInput, ActivityIndicator,
+  TextInput, ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +19,8 @@ export default function ListScreen() {
   const [addressInput, setAddressInput] = useState('');
   const [radius, setRadius] = useState<RadiusOption>(5);
   const [searchParams, setSearchParams] = useState<{ lat?: number; lng?: number; address?: string } | null>(null);
+
+  const [refreshing, setRefreshing] = useState(false);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['places', 'nearby', searchParams, radius, user?.language],
@@ -99,6 +101,14 @@ export default function ListScreen() {
         data={data?.places || []}
         keyExtractor={(item) => item.placeId}
         contentContainerStyle={{ padding: 12, gap: 12 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={async () => { setRefreshing(true); await refetch(); setRefreshing(false); }}
+            colors={['#FF6B35']}
+            tintColor="#FF6B35"
+          />
+        }
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.card}
