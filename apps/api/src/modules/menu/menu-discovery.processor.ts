@@ -258,7 +258,7 @@ export class MenuDiscoveryProcessor {
       await job.progress(10);
 
       // Use Gemini Vision for OCR + translation in one step
-      const model = this.gemini.getGenerativeModel({ model: 'gemini-2.0-flash' });
+      const model = this.gemini.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
       const prompt = `You are analyzing a photo of a restaurant menu. Extract ALL menu items you can see.
 For each item, provide:
@@ -931,7 +931,7 @@ Return ONLY a valid JSON array, no markdown:
   }
 
   private async translateWithGemini(items: RawMenuItem[], targetLanguage: string): Promise<any[]> {
-    const model = this.gemini!.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = this.gemini!.getGenerativeModel({ model: 'gemini-2.5-flash' });
     const allResults: any[] = [];
     const batchSize = 50;
 
