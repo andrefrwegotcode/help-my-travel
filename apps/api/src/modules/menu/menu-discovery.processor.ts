@@ -124,41 +124,46 @@ export class MenuDiscoveryProcessor {
       }
       await job.progress(60);
 
-      // Step 4.5: Try Google Maps data via Places API v1 (New)
-      // Gets menu URL from googleMapsLinks and additional photos
-      let v1Photos: Array<{ name: string; widthPx: number; heightPx: number }> = [];
-      if (!rawText) {
-        this.logger.log(`[Job ${job.id}] Step 4.5: Trying Places API v1 (menu URL + photos)`);
-        const gmData = await this.placesService.getGoogleMapsMenuData(placeId);
-        v1Photos = gmData.photos;
-
-        if (gmData.menuUrl) {
-          this.logger.log(`[Job ${job.id}] Found menu URL from Places API v1: ${gmData.menuUrl}`);
-          // Try PDF first (Google Drive or direct PDF)
-          if (gmData.menuUrl.toLowerCase().includes('.pdf') || gmData.menuUrl.includes('drive.google.com')) {
-            let downloadUrl = gmData.menuUrl;
-            const driveMatch = gmData.menuUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      // Step 4.5: Try scraping Google Maps page for menu link
+      // The "Menu" section on Google Maps contains a URL not available via API
+      if (!rawText && place.googleMapsUrl) {
+        this.logger.log(`[Job ${job.id}] Step 4.5: Scraping Google Maps for menu link`);
+        const menuLink = await this.placesService.scrapeGoogleMapsMenuLink(place.googleMapsUrl);
+        if (menuLink) {
+          this.logger.log(`[Job ${job.id}] Found menu link from Google Maps: ${menuLink}`);
+          // Try PDF first
+          if (menuLink.toLowerCase().includes('.pdf') || menuLink.includes('drive.google.com')) {
+            let downloadUrl = menuLink;
+            const driveMatch = menuLink.match(/\/d\/([a-zA-Z0-9_-]+)/);
             if (driveMatch) {
               downloadUrl = `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
             }
             const pdfResult = await this.fetchPdf(downloadUrl);
             if (pdfResult) {
               rawText = pdfResult.text;
-              sourceUrl = gmData.menuUrl;
+              sourceUrl = menuLink;
               source = 'GOOGLE';
             }
           }
-          // Try as website if not PDF or PDF failed
+          // Try as website
           if (!rawText) {
-            const webMenuResult = await this.fetchWebsite(gmData.menuUrl);
+            const webMenuResult = await this.fetchWebsite(menuLink);
             if (webMenuResult) {
               rawText = webMenuResult.text;
-              sourceUrl = gmData.menuUrl;
+              sourceUrl = menuLink;
               source = 'GOOGLE';
               foodImages = webMenuResult.images || [];
             }
           }
         }
+      }
+
+      // Step 4.6: Fetch additional photos from Places API v1 (New)
+      // The v1 API may return different photos than the legacy API
+      let v1Photos: Array<{ name: string; widthPx: number; heightPx: number }> = [];
+      if (!rawText) {
+        this.logger.log(`[Job ${job.id}] Step 4.6: Fetching v1 photos for extra coverage`);
+        v1Photos = await this.placesService.getPlacePhotosV1(placeId);
       }
       await job.progress(65);
 
@@ -172,12 +177,22 @@ export class MenuDiscoveryProcessor {
         let photosResult: any[] | null = null;
         if (legacyPhotos.length > 0) {
           photosResult = await this.tryGooglePlacesPhotosOCR(legacyPhotos, language);
+          if (photosResult) {
+            this.logger.log(`[Job ${job.id}] Legacy photo OCR found ${photosResult.length} menu items`);
+          } else {
+            this.logger.log(`[Job ${job.id}] Legacy photos: no menu items found (all photos may be non-menu)`);
+          }
         }
 
         // If legacy photos didn't yield results, try v1 photos
         if (!photosResult && v1Photos.length > 0) {
-          this.logger.log(`[Job ${job.id}] Legacy photos yielded nothing, trying ${v1Photos.length} v1 photos`);
+          this.logger.log(`[Job ${job.id}] Trying ${v1Photos.length} v1 photos for OCR`);
           photosResult = await this.tryPlacesV1PhotosOCR(v1Photos, language);
+          if (photosResult) {
+            this.logger.log(`[Job ${job.id}] V1 photo OCR found ${photosResult.length} menu items`);
+          } else {
+            this.logger.log(`[Job ${job.id}] V1 photos: no menu items found either`);
+          }
         }
 
         if (photosResult) {

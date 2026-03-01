@@ -117,7 +117,7 @@ export class PlacesService {
           fields: [
             'place_id', 'name', 'formatted_address', 'geometry',
             'rating', 'user_ratings_total', 'price_level',
-            'website', 'formatted_phone_number', 'opening_hours',
+            'website', 'url', 'formatted_phone_number', 'opening_hours',
             'photos', 'types',
           ],
           key: apiKey!,
@@ -134,6 +134,7 @@ export class PlacesService {
         userRatingsTotal: p.user_ratings_total ?? null,
         priceLevel: p.price_level ?? null,
         website: p.website ?? null,
+        googleMapsUrl: p.url ?? null,
         phone: p.formatted_phone_number ?? null,
         openingHours: p.opening_hours
           ? {
@@ -155,16 +156,13 @@ export class PlacesService {
   }
 
   /**
-   * Fetch menu-related URLs and extra photos via Places API v1 (New).
-   * Tries googleMapsLinks, websiteUri, and returns additional photos
-   * that may include menu photos not returned by the legacy API.
+   * Fetch extra photos via Places API v1 (New).
+   * The v1 API may return different/additional photos compared to the legacy API,
+   * increasing the chance of finding menu photos for OCR.
    */
-  async getGoogleMapsMenuData(placeId: string): Promise<{
-    menuUrl: string | null;
-    photos: Array<{ name: string; widthPx: number; heightPx: number }>;
-  }> {
+  async getPlacePhotosV1(placeId: string): Promise<Array<{ name: string; widthPx: number; heightPx: number }>> {
     const apiKey = this.config.get<string>('GOOGLE_PLACES_API_KEY');
-    if (!apiKey) return { menuUrl: null, photos: [] };
+    if (!apiKey) return [];
 
     try {
       const res = await axios.get(
@@ -172,33 +170,22 @@ export class PlacesService {
         {
           headers: {
             'X-Goog-Api-Key': apiKey,
-            'X-Goog-FieldMask': 'websiteUri,googleMapsLinks,photos',
+            'X-Goog-FieldMask': 'photos',
           },
           timeout: 8000,
         },
       );
 
-      const data = res.data;
-      this.logger.log(`Places API v1 for ${placeId}: websiteUri=${data.websiteUri || 'none'}, photos=${data.photos?.length || 0}, googleMapsLinks=${JSON.stringify(data.googleMapsLinks || {})}`);
-
-      // Try to find a menu URL from googleMapsLinks
-      let menuUrl: string | null = null;
-      if (data.googleMapsLinks?.menuUri) {
-        menuUrl = data.googleMapsLinks.menuUri;
-        this.logger.log(`Found menuUri in googleMapsLinks: ${menuUrl}`);
-      }
-
-      // Extract v1 photos (different from legacy API photos)
-      const photos = (data.photos || []).map((p: any) => ({
+      const photos = (res.data?.photos || []).map((p: any) => ({
         name: p.name,
         widthPx: p.widthPx || 0,
         heightPx: p.heightPx || 0,
       }));
-
-      return { menuUrl, photos };
+      this.logger.log(`Places API v1 returned ${photos.length} photos for ${placeId}`);
+      return photos;
     } catch (err) {
-      this.logger.warn(`Failed to fetch Places API v1 data: ${err}`);
-      return { menuUrl: null, photos: [] };
+      this.logger.warn(`Failed to fetch Places API v1 photos: ${err}`);
+      return [];
     }
   }
 
@@ -208,6 +195,59 @@ export class PlacesService {
   getPhotoUrlV1(photoName: string, maxWidthPx = 1200): string {
     const apiKey = this.config.get<string>('GOOGLE_PLACES_API_KEY');
     return `https://places.googleapis.com/v1/${photoName}/media?key=${apiKey}&maxWidthPx=${maxWidthPx}`;
+  }
+
+  /**
+   * Try to scrape the Google Maps page for a place to find the menu URL.
+   * Google Maps shows a "Menu" link for restaurants that is not available via API.
+   */
+  async scrapeGoogleMapsMenuLink(googleMapsUrl: string): Promise<string | null> {
+    if (!googleMapsUrl) return null;
+
+    try {
+      const res = await axios.get(googleMapsUrl, {
+        timeout: 10000,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept-Language': 'en-US,en;q=0.9',
+        },
+        maxRedirects: 5,
+      });
+
+      const html = res.data;
+      if (!html || typeof html !== 'string') return null;
+
+      // Google Maps embeds menu URLs in the page source
+      // Look for patterns like "menu":"https://..." or menu-related URLs
+      const menuPatterns = [
+        // JSON-embedded menu URL
+        /"menu(?:_url|Url|_link|Link)?"\s*:\s*"(https?:\/\/[^"]+)"/i,
+        // Direct menu link in HTML
+        /href="(https?:\/\/[^"]*menu[^"]*)"/i,
+        // Google redirect URL containing menu
+        /url=(https?(?:%3A|:)(?:%2F|\/){2}[^&"]*menu[^&"]*)/i,
+        // Data attribute with menu URL
+        /data-url="(https?:\/\/[^"]*menu[^"]*)"/i,
+      ];
+
+      for (const pattern of menuPatterns) {
+        const match = html.match(pattern);
+        if (match && match[1]) {
+          let url = match[1];
+          // Decode URL-encoded characters
+          url = decodeURIComponent(url);
+          // Skip Google internal URLs
+          if (url.includes('google.com/maps') || url.includes('google.com/search')) continue;
+          this.logger.log(`Found menu URL via Google Maps scraping: ${url}`);
+          return url;
+        }
+      }
+
+      return null;
+    } catch (err) {
+      this.logger.warn(`Failed to scrape Google Maps page: ${err}`);
+      return null;
+    }
   }
 
   getPhotoUrl(photoReference: string, maxWidth = 400): string {
