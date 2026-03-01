@@ -8,6 +8,8 @@ export default function PlaceLayout() {
         headerTintColor: 'white',
         headerTitleStyle: { fontWeight: '700' },
       }}
-    />
+    >
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+    </Stack>
   );
 }
