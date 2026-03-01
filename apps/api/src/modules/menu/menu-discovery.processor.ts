@@ -122,6 +122,41 @@ export class MenuDiscoveryProcessor {
           }
         }
       }
+      await job.progress(60);
+
+      // Step 4.5: Try Google Maps menu URL (from the "Menu" tab on Google Maps)
+      // This can be a Google Drive PDF, external menu URL, etc.
+      if (!rawText) {
+        this.logger.log(`[Job ${job.id}] Step 4.5: Trying Google Maps menu URL`);
+        const menuUrl = await this.placesService.getGoogleMapsMenuUrl(placeId);
+        if (menuUrl) {
+          this.logger.log(`[Job ${job.id}] Found Google Maps menu URL: ${menuUrl}`);
+          // Try to fetch it (could be PDF or HTML)
+          if (menuUrl.toLowerCase().includes('.pdf') || menuUrl.includes('drive.google.com')) {
+            // Google Drive links need conversion to direct download
+            let downloadUrl = menuUrl;
+            const driveMatch = menuUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+            if (driveMatch) {
+              downloadUrl = `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
+            }
+            const pdfResult = await this.fetchPdf(downloadUrl);
+            if (pdfResult) {
+              rawText = pdfResult.text;
+              sourceUrl = menuUrl;
+              source = 'GOOGLE';
+            }
+          }
+          if (!rawText) {
+            const webResult = await this.fetchWebsite(menuUrl);
+            if (webResult) {
+              rawText = webResult.text;
+              sourceUrl = menuUrl;
+              source = 'GOOGLE';
+              foodImages = webResult.images || [];
+            }
+          }
+        }
+      }
       await job.progress(65);
 
       // Step 5: If no menu text found, try Google Places photos with Gemini Vision OCR

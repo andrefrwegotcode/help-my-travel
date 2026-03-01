@@ -1,5 +1,6 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import axios from 'axios';
 import {
   Client,
   PlaceType1,
@@ -150,6 +151,39 @@ export class PlacesService {
     } catch (err) {
       this.logger.error(`Failed to fetch place details for ${placeId}`, err);
       throw new BadRequestException('Failed to fetch restaurant details');
+    }
+  }
+
+  /**
+   * Fetch the Google Maps menu URL via Places API v1 (New).
+   * This returns the URL that appears in the "Menu" tab on Google Maps,
+   * which can be a Google Drive PDF, an external menu URL, etc.
+   */
+  async getGoogleMapsMenuUrl(placeId: string): Promise<string | null> {
+    const apiKey = this.config.get<string>('GOOGLE_PLACES_API_KEY');
+    if (!apiKey) return null;
+
+    try {
+      const res = await axios.get(
+        `https://places.googleapis.com/v1/places/${placeId}`,
+        {
+          headers: {
+            'X-Goog-Api-Key': apiKey,
+            'X-Goog-FieldMask': 'googleMapsMenuUri',
+          },
+          timeout: 5000,
+        },
+      );
+
+      const menuUri = res.data?.googleMapsMenuUri;
+      if (menuUri) {
+        this.logger.log(`Found Google Maps menu URL for ${placeId}: ${menuUri}`);
+        return menuUri;
+      }
+      return null;
+    } catch (err) {
+      this.logger.warn(`Failed to fetch Google Maps menu URL: ${err}`);
+      return null;
     }
   }
 
