@@ -115,8 +115,8 @@ importers:
         specifier: ^8.5.0
         version: 8.5.1
       '@google/generative-ai':
-        specifier: ^0.24.1
-        version: 0.24.1
+        specifier: ^0.21.0
+        version: 0.21.0
       '@googlemaps/google-maps-services-js':
         specifier: ^3.4.0
         version: 3.4.2
@@ -1425,8 +1425,8 @@ packages:
     resolution: {integrity: sha512-xqIRV+lTaszgPHw0ulUQ3CUhnbPnsnYlh90mBh3PomU5SUGRlJc5bjN0UEP6MICnrj3AugxYQSelNn+rxGj2Ig==}
     engines: {node: '>=14.0.0'}
 
-  '@google/generative-ai@0.24.1':
-    resolution: {integrity: sha512-MqO+MLfM6kjxcKoy0p1wRzG3b4ZZXtPI+z2IE26UogS2Cm/XHO+7gGRBh6gcJsOiIVoH93UwKvW4HdgiOZCy9Q==}
+  '@google/generative-ai@0.21.0':
+    resolution: {integrity: sha512-7XhUbtnlkSEZK15kN3t+tzIMxsbKm/dSkKBFalj+20NvPKe1kBY7mR2P7vuijEn+f06z5+A8bVGKO0v39cr6Wg==}
     engines: {node: '>=18.0.0'}
 
   '@googlemaps/google-maps-services-js@3.4.2':
@@ -9501,7 +9501,7 @@ snapshots:
       - encoding
       - supports-color
 
-  '@google/generative-ai@0.24.1': {}
+  '@google/generative-ai@0.21.0': {}
 
   '@googlemaps/google-maps-services-js@3.4.2':
     dependencies:

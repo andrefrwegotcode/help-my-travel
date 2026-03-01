@@ -39,11 +39,8 @@ RUN npm install -g pnpm@9
 
 WORKDIR /app
 
-# Install Chromium for Puppeteer + OpenSSL for Prisma
-RUN apk add --no-cache chromium nss freetype harfbuzz ca-certificates ttf-freefont openssl
-
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+# OpenSSL for Prisma
+RUN apk add --no-cache openssl
 
 # Copy built files
 COPY --from=builder /app/node_modules ./node_modules
