@@ -65,7 +65,14 @@
     "addReview": "Escrever Avaliação",
     "uploadPhotos": "Enviar Fotos",
     "scanQr": "Escanear QR Code",
-    "scanPhoto": "Foto do Cardápio"
+    "scanPhoto": "Foto do Cardápio",
+    "googleRating": "Avaliação Google",
+    "appReviews": "Avaliações da Comunidade",
+    "noReviews": "Nenhuma avaliação ainda. Seja o primeiro!",
+    "submitReview": "Enviar Avaliação",
+    "reviewPlaceholder": "Compartilhe sua experiência... (opcional)",
+    "reviewSubmitted": "Avaliação enviada!",
+    "basedOnReviews": "baseado em {{count}} avaliações"
   },
   "menu": {
     "title": "Cardápio",

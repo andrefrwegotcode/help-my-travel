@@ -65,7 +65,14 @@
     "addReview": "Write a Review",
     "uploadPhotos": "Upload Photos",
     "scanQr": "Scan QR Code",
-    "scanPhoto": "Photo Menu"
+    "scanPhoto": "Photo Menu",
+    "googleRating": "Google Rating",
+    "appReviews": "Community Reviews",
+    "noReviews": "No reviews yet. Be the first!",
+    "submitReview": "Submit Review",
+    "reviewPlaceholder": "Share your experience... (optional)",
+    "reviewSubmitted": "Review submitted!",
+    "basedOnReviews": "based on {{count}} reviews"
   },
   "menu": {
     "title": "Menu",
