@@ -124,36 +124,66 @@ export class MenuDiscoveryProcessor {
       }
       await job.progress(65);
 
+      // Step 5: If no menu text found, try Google Places photos with Gemini Vision OCR
+      if (!rawText && this.gemini && place.photos && place.photos.length > 0) {
+        this.logger.log(`[Job ${job.id}] Step 5: Trying Google Places photos OCR (${place.photos.length} photos available)`);
+        const photosResult = await this.tryGooglePlacesPhotosOCR(place.photos, language);
+        if (photosResult) {
+          // Google Photos OCR returns already-translated items, skip normal parse+translate
+          const expiresAt = new Date(Date.now() + MENU_CACHE_TTL_HOURS * 60 * 60 * 1000);
+          const rawTextFromPhotos = photosResult.map(i => `${i.nameOriginal || i.name} ${i.price || ''}`).join('\n');
+          await this.prisma.menuCache.upsert({
+            where: { placeId_language: { placeId, language } },
+            create: { placeId, language, rawText: rawTextFromPhotos, items: photosResult as any, source: 'PHOTO_OCR', sourceUrl: null, expiresAt },
+            update: { rawText: rawTextFromPhotos, items: photosResult as any, source: 'PHOTO_OCR', sourceUrl: null, expiresAt, fetchedAt: new Date() },
+          });
+          await job.progress(100);
+          this.logger.log(`[Job ${job.id}] Done — ${photosResult.length} items from Google Places photos OCR`);
+          return { success: true, itemCount: photosResult.length, source: 'PHOTO_OCR' };
+        }
+      }
+      await job.progress(70);
+
       if (!rawText) {
         this.logger.warn(`[Job ${job.id}] No menu found for "${placeName}"`);
         throw new Error(`No menu found online for "${placeName}".`);
       }
 
-      // Step 5: Parse raw text into menu items
-      const items = this.parseMenuItems(rawText);
-      this.logger.log(`[Job ${job.id}] Parsed ${items.length} menu items from ${source}`);
+      // Step 6: Parse + translate in a single Gemini call (fast path)
+      let translatedItems: any[] | null = null;
 
-      if (items.length === 0) {
-        throw new Error(`Could not extract menu items for "${placeName}". The menu format was not recognized.`);
-      }
-
-      // Step 6: Don't assign images to individual items unless they came from
-      // a menu-specific container. Generic restaurant photos would be misleading.
-      // Only assign images from food-specific containers on the restaurant website.
-      if (foodImages.length > 0 && foodImages.length <= items.length) {
-        // Only assign if we have a reasonable number of images vs items
-        // (suggests images are actually per-dish, not generic page images)
-        for (let i = 0; i < foodImages.length; i++) {
-          items[i].imageUrl = foodImages[i];
+      if (this.gemini) {
+        try {
+          translatedItems = await this.parseAndTranslateWithGemini(rawText, placeName, language);
+          if (translatedItems && translatedItems.length > 0) {
+            this.logger.log(`[Job ${job.id}] Gemini parsed+translated ${translatedItems.length} items in one call`);
+          } else {
+            translatedItems = null;
+          }
+        } catch (err) {
+          this.logger.warn(`[Job ${job.id}] Gemini parse+translate failed, falling back to regex: ${err}`);
         }
-        this.logger.log(`[Job ${job.id}] Assigned ${foodImages.length} food images to items`);
-      } else if (foodImages.length > items.length) {
-        // More images than items = likely generic photos, skip assignment
-        this.logger.log(`[Job ${job.id}] Skipped image assignment (${foodImages.length} images > ${items.length} items — likely not per-dish)`);
       }
 
-      // Step 7: Translate items
-      const translatedItems = await this.translateItems(items, language);
+      // Fallback: regex parsing + separate translation
+      if (!translatedItems) {
+        const items = this.parseMenuItems(rawText);
+        this.logger.log(`[Job ${job.id}] Regex parsed ${items.length} menu items from ${source}`);
+
+        if (items.length === 0) {
+          throw new Error(`Could not extract menu items for "${placeName}". The menu format was not recognized.`);
+        }
+
+        // Assign images from food-specific containers
+        if (foodImages.length > 0 && foodImages.length <= items.length) {
+          for (let i = 0; i < foodImages.length; i++) {
+            items[i].imageUrl = foodImages[i];
+          }
+          this.logger.log(`[Job ${job.id}] Assigned ${foodImages.length} food images to items`);
+        }
+
+        translatedItems = await this.translateItems(items, language);
+      }
       await job.progress(90);
 
       // Step 8: Persist in DB cache
@@ -316,6 +346,158 @@ Return ONLY a valid JSON array, no markdown:
       this.logger.error(`[Job ${job.id}] Scan Photo failed: ${err}`);
       throw err;
     }
+  }
+
+  // ──────────────────────────────────────────────
+  // Gemini-based intelligent menu parsing from raw text
+  // ──────────────────────────────────────────────
+  /**
+   * Parse AND translate menu in a single Gemini call (avoids double API call).
+   * Returns fully translated items ready to cache, or null if parsing failed.
+   */
+  private async parseAndTranslateWithGemini(
+    rawText: string, placeName: string, targetLanguage: string,
+  ): Promise<any[] | null> {
+    if (!this.gemini) return null;
+
+    const model = this.gemini.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const truncated = rawText.slice(0, 12000);
+
+    const prompt = `You are a restaurant menu parser and translator. Analyze this raw text from "${placeName}" restaurant, extract ALL food/drink menu items, and translate them to ${targetLanguage}.
+
+RAW TEXT:
+${truncated}
+
+RULES:
+1. Extract ONLY real food and drink items. Skip: addresses, phone numbers, schedules, social media, staff names, decoration text, website info, allergen notices, general descriptions.
+2. Translate each dish name to ${targetLanguage}. Keep the original name too.
+3. For regional/cultural dishes, add a brief description (max 15 words) in ${targetLanguage} explaining the dish.
+4. Detect "menú del día" / "menu of the day" / "menu diário" format — fixed-price multi-course menus. If detected:
+   - Set category to "Menú del Día"
+   - Set price on EACH item to the fixed price like "12.00 €"
+   - In description, specify the course: "Primer plato", "Segundo plato", "Postre", etc.
+5. Normalize prices to "X.XX €" format. Associate standalone prices with the nearest dish.
+6. Translate category names to ${targetLanguage} (except "Menú del Día" — keep as is).
+7. Do NOT invent items. Only extract what is clearly in the text.
+
+Return ONLY a valid JSON array, no markdown:
+[{"name": "translated name", "nameOriginal": "original name", "price": "12.50 €" or null, "category": "translated category" or null, "description": "brief description in ${targetLanguage}" or null}]`;
+
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
+    const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+
+    if (!jsonMatch) return null;
+
+    const parsed = JSON.parse(jsonMatch[0]);
+    if (!Array.isArray(parsed) || parsed.length === 0) return null;
+
+    return parsed
+      .filter((item: any) => item.name && item.name !== 'SKIP' && item.nameOriginal !== 'SKIP' && item.name.length > 1)
+      .map((item: any, idx: number) => ({
+        id: `item-${idx}`,
+        name: String(item.name).trim(),
+        nameOriginal: String(item.nameOriginal || item.name).trim(),
+        description: item.description || null,
+        descriptionOriginal: null,
+        ingredients: null,
+        price: item.price || null,
+        priceValue: item.price ? parseFloat(String(item.price).replace(/[^0-9.,]/g, '').replace(',', '.')) || null : null,
+        currency: item.price ? this.detectCurrency(String(item.price)) : null,
+        category: item.category || null,
+        imageUrl: null,
+      }));
+  }
+
+  // ──────────────────────────────────────────────
+  // Google Places Photos → Gemini Vision OCR fallback
+  // ──────────────────────────────────────────────
+  private async tryGooglePlacesPhotosOCR(
+    photos: Array<{ photoReference: string; width: number; height: number }>,
+    language: string,
+  ): Promise<any[] | null> {
+    if (!this.gemini) return null;
+
+    const model = this.gemini.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+    const prompt = `Analyze this image. Is it a restaurant menu or food menu board?
+If YES, extract ALL menu items you can see. For each item provide:
+- name: the dish name exactly as written (original language)
+- nameTranslated: the dish name translated to ${language}
+- price: the price if visible (e.g., "12.50 €"), or null
+- category: the section/category (e.g., "Starters", "Main Courses", "Menú del Día"), or null
+- description: a brief description (max 15 words) in ${language}, or null
+
+IMPORTANT: If this is a "menú del día" (fixed-price daily menu with multiple courses), note the fixed price and mark each item with its course (Primer plato, Segundo plato, Postre, etc.) in the description.
+
+If this is NOT a menu image (e.g., restaurant interior, food close-up, exterior), return exactly: []
+
+Return ONLY a valid JSON array, no markdown:
+[{"name": "original name", "nameTranslated": "translated name", "price": "12.50 €", "category": "Category", "description": "description"}]`;
+
+    // Process ALL photos in parallel for speed
+    const processPhoto = async (photo: { photoReference: string }): Promise<any[]> => {
+      try {
+        const photoUrl = this.placesService.getPhotoUrl(photo.photoReference, 1200);
+        const imgRes = await axios.get(photoUrl, {
+          responseType: 'arraybuffer',
+          timeout: 10000,
+          maxContentLength: 15 * 1024 * 1024,
+        });
+
+        const base64 = Buffer.from(imgRes.data).toString('base64');
+        const contentType = imgRes.headers['content-type'] || 'image/jpeg';
+
+        const result = await model.generateContent([
+          prompt,
+          { inlineData: { mimeType: contentType, data: base64 } },
+        ]);
+
+        const responseText = result.response.text();
+        const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) return [];
+
+        const parsed = JSON.parse(jsonMatch[0]);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (err) {
+        this.logger.warn(`Failed to OCR Google Places photo: ${err}`);
+        return [];
+      }
+    };
+
+    const results = await Promise.allSettled(photos.map(processPhoto));
+
+    const allItems: any[] = [];
+    for (const result of results) {
+      if (result.status !== 'fulfilled' || result.value.length === 0) continue;
+      this.logger.log(`Google Places photo OCR found ${result.value.length} items`);
+      for (const item of result.value) {
+        allItems.push({
+          id: `item-${allItems.length}`,
+          name: item.nameTranslated || item.name || 'Unknown',
+          nameOriginal: item.name || 'Unknown',
+          description: item.description || null,
+          descriptionOriginal: null,
+          ingredients: null,
+          price: item.price || null,
+          priceValue: item.price ? parseFloat(String(item.price).replace(/[^0-9.,]/g, '').replace(',', '.')) || null : null,
+          currency: item.price ? this.detectCurrency(String(item.price)) : null,
+          category: item.category || null,
+          imageUrl: null,
+        });
+      }
+    }
+
+    // Deduplicate by name
+    const seen = new Set<string>();
+    const unique = allItems.filter(item => {
+      const key = (item.nameOriginal || item.name).toLowerCase().trim();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    return unique.length > 0 ? unique : null;
   }
 
   // ──────────────────────────────────────────────
@@ -974,6 +1156,7 @@ IMPORTANT RULES:
 2. For common dishes, just translate the name.
 3. If any item is NOT a real food/drink item (e.g. a price, phone number, address, schedule, restaurant info, website, decoration text), set its name to "SKIP" so it can be filtered out.
 4. Translate category names too.
+5. For "Menú del Día" items: keep the category name as "Menú del Día" (do NOT translate this). If the description contains a course indicator (e.g., "Primer plato", "Segundo plato", "Postre"), keep it at the START of the description in the target language (e.g., "First course - ...", "Primer plato - ...").
 
 Input: ${JSON.stringify(inputItems)}
 

@@ -42,32 +42,58 @@ export class PlacesService {
     const language = (params.language || 'en') as Language;
 
     try {
-      const response = await this.mapsClient.placesNearby({
-        params: {
-          location: { lat, lng },
-          radius: radiusMeters,
-          type: PlaceType1.restaurant,
-          language,
-          key: apiKey,
-        },
-      });
+      // Search multiple food-related place types in parallel to catch
+      // pizzerias, cafés, bars, bakeries etc. that aren't typed as "restaurant"
+      const foodTypes = [
+        PlaceType1.restaurant,
+        PlaceType1.cafe,
+        PlaceType1.bar,
+        PlaceType1.bakery,
+        PlaceType1.meal_delivery,
+        PlaceType1.meal_takeaway,
+      ];
 
-      const places = response.data.results.map((p) => ({
-        placeId: p.place_id,
-        name: p.name,
-        address: p.vicinity,
-        location: p.geometry?.location,
-        rating: p.rating ?? null,
-        userRatingsTotal: p.user_ratings_total ?? null,
-        priceLevel: p.price_level ?? null,
-        openNow: p.opening_hours?.open_now ?? null,
-        photos: (p.photos || []).slice(0, 3).map((ph) => ({
-          photoReference: ph.photo_reference,
-          width: ph.width,
-          height: ph.height,
-        })),
-        distance: this.haversineDistance(lat!, lng!, p.geometry?.location.lat!, p.geometry?.location.lng!),
-      }));
+      const results = await Promise.allSettled(
+        foodTypes.map((type) =>
+          this.mapsClient.placesNearby({
+            params: {
+              location: { lat, lng },
+              radius: radiusMeters,
+              type,
+              language,
+              key: apiKey,
+            },
+          }),
+        ),
+      );
+
+      // Merge and deduplicate by placeId
+      const seen = new Set<string>();
+      const places: any[] = [];
+
+      for (const result of results) {
+        if (result.status !== 'fulfilled') continue;
+        for (const p of result.value.data.results) {
+          if (!p.place_id || seen.has(p.place_id)) continue;
+          seen.add(p.place_id);
+          places.push({
+            placeId: p.place_id,
+            name: p.name,
+            address: p.vicinity,
+            location: p.geometry?.location,
+            rating: p.rating ?? null,
+            userRatingsTotal: p.user_ratings_total ?? null,
+            priceLevel: p.price_level ?? null,
+            openNow: p.opening_hours?.open_now ?? null,
+            photos: (p.photos || []).slice(0, 3).map((ph) => ({
+              photoReference: ph.photo_reference,
+              width: ph.width,
+              height: ph.height,
+            })),
+            distance: this.haversineDistance(lat!, lng!, p.geometry?.location.lat!, p.geometry?.location.lng!),
+          });
+        }
+      }
 
       // Sort by distance
       places.sort((a, b) => (a.distance ?? 0) - (b.distance ?? 0));

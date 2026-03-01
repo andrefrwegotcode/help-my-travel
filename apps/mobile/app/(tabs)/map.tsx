@@ -3,7 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ActivityIndicator, Alert, ScrollView, Platform,
 } from 'react-native';
-import MapView, { Marker, Circle } from 'react-native-maps';
+import MapView, { Marker, Callout, Circle } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -140,11 +140,27 @@ export default function MapScreen() {
             <Marker
               key={place.placeId}
               coordinate={{ latitude: place.location.lat, longitude: place.location.lng }}
-              title={place.name}
-              description={place.address}
               pinColor="#FF6B35"
-              onPress={() => router.push(`/restaurant/${place.placeId}`)}
-            />
+            >
+              <Callout
+                tooltip
+                onPress={() => router.push(`/restaurant/${place.placeId}`)}
+              >
+                <View style={styles.callout}>
+                  <Text style={styles.calloutTitle} numberOfLines={1}>{place.name}</Text>
+                  {place.address && (
+                    <Text style={styles.calloutAddress} numberOfLines={2}>{place.address}</Text>
+                  )}
+                  {place.rating && (
+                    <View style={styles.calloutRating}>
+                      <Ionicons name="star" size={12} color="#FF6B35" />
+                      <Text style={styles.calloutRatingText}>{place.rating}</Text>
+                    </View>
+                  )}
+                  <Text style={styles.calloutCta}>{t('map.viewDetails')} →</Text>
+                </View>
+              </Callout>
+            </Marker>
           ))}
 
           {/* User location */}
@@ -194,6 +210,16 @@ const styles = StyleSheet.create({
   radiusChipText: { fontSize: 12, fontWeight: '600', color: '#717171' },
   radiusChipTextActive: { color: 'white' },
   map: { flex: 1 },
+  callout: {
+    backgroundColor: 'white', borderRadius: 12, padding: 12, minWidth: 180, maxWidth: 250,
+    shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 8, elevation: 5,
+    borderWidth: 1, borderColor: '#EBEBEB',
+  },
+  calloutTitle: { fontSize: 15, fontWeight: '700', color: '#222222', marginBottom: 2 },
+  calloutAddress: { fontSize: 12, color: '#717171', marginBottom: 6 },
+  calloutRating: { flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 6 },
+  calloutRatingText: { fontSize: 12, color: '#717171', fontWeight: '600' },
+  calloutCta: { fontSize: 13, fontWeight: '600', color: '#FF6B35' },
   mapPlaceholder: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
   mapPlaceholderText: { color: '#717171', fontSize: 14 },
   loadingOverlay: {

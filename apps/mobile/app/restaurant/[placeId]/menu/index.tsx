@@ -208,23 +208,41 @@ export default function MenuScreen() {
               <Text style={styles.noResultsText}>{t('menu.noItems')}</Text>
             </View>
           ) : (
-            filteredCategories.map((category) => (
-              <View key={category.name} style={styles.category}>
-                <Text style={styles.categoryName}>{category.name}</Text>
-                {category.items.map((item) => (
-                  <MenuItemCard
-                    key={item.id}
-                    item={item}
-                    quantity={getItemQuantity(item.id)}
-                    onAdd={() => addItem(item)}
-                    onRemove={() => {
-                      const q = getItemQuantity(item.id);
-                      if (q > 0) useOrderStore.getState().updateQuantity(item.id, q - 1);
-                    }}
-                  />
-                ))}
-              </View>
-            ))
+            filteredCategories.map((category) => {
+              const isDailyMenu = /men[úu]\s*(del\s*d[ií]a|di[aá]rio|diario|of the day)/i.test(category.name);
+              return (
+                <View key={category.name} style={styles.category}>
+                  {isDailyMenu ? (
+                    <View style={styles.dailyMenuHeader}>
+                      <Ionicons name="calendar-outline" size={18} color="white" />
+                      <Text style={styles.dailyMenuTitle}>{category.name}</Text>
+                      {category.items[0]?.price && (
+                        <View style={styles.dailyMenuPriceBadge}>
+                          <Text style={styles.dailyMenuPrice}>
+                            {category.items[0].price.replace(/\s*\(.*\)/, '')}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  ) : (
+                    <Text style={styles.categoryName}>{category.name}</Text>
+                  )}
+                  {category.items.map((item) => (
+                    <MenuItemCard
+                      key={item.id}
+                      item={item}
+                      quantity={getItemQuantity(item.id)}
+                      isDailyMenu={isDailyMenu}
+                      onAdd={() => addItem(item)}
+                      onRemove={() => {
+                        const q = getItemQuantity(item.id);
+                        if (q > 0) useOrderStore.getState().updateQuantity(item.id, q - 1);
+                      }}
+                    />
+                  ))}
+                </View>
+              );
+            })
           )}
         </ScrollView>
 
@@ -279,9 +297,56 @@ export default function MenuScreen() {
 }
 
 function MenuItemCard({
-  item, quantity, onAdd, onRemove,
-}: { item: MenuItem; quantity: number; onAdd: () => void; onRemove: () => void }) {
+  item, quantity, isDailyMenu, onAdd, onRemove,
+}: { item: MenuItem; quantity: number; isDailyMenu?: boolean; onAdd: () => void; onRemove: () => void }) {
   const { t } = useTranslation();
+
+  // For daily menu items, show course badge + simplified layout
+  if (isDailyMenu) {
+    // Extract course info from description (e.g., "Primer plato", "Segundo plato", "Postre")
+    const courseMatch = item.description?.match(/^(primer|segundo|tercer|postre|dessert|first|second|third|bebida|drink|starter|main|sobremesa)/i);
+    const courseName = courseMatch ? courseMatch[0] : null;
+    const descWithoutCourse = courseName
+      ? item.description?.replace(new RegExp(`^${courseName}[^a-zA-ZáéíóúÁÉÍÓÚñÑ]*`, 'i'), '').trim()
+      : item.description;
+
+    return (
+      <View style={cardStyles.dailyCard}>
+        <View style={cardStyles.info}>
+          {courseName && (
+            <View style={cardStyles.courseBadge}>
+              <Text style={cardStyles.courseBadgeText}>{courseName.charAt(0).toUpperCase() + courseName.slice(1)}</Text>
+            </View>
+          )}
+          <Text style={cardStyles.name}>{item.name}</Text>
+          {item.nameOriginal !== item.name && (
+            <Text style={cardStyles.original}>{item.nameOriginal}</Text>
+          )}
+          {descWithoutCourse ? (
+            <Text style={cardStyles.desc} numberOfLines={2}>{descWithoutCourse}</Text>
+          ) : null}
+        </View>
+        <View style={cardStyles.controls}>
+          {quantity > 0 ? (
+            <>
+              <TouchableOpacity style={cardStyles.btn} onPress={onRemove}>
+                <Text style={cardStyles.btnText}>−</Text>
+              </TouchableOpacity>
+              <Text style={cardStyles.qty}>{quantity}</Text>
+              <TouchableOpacity style={[cardStyles.btn, cardStyles.btnAdd]} onPress={onAdd}>
+                <Text style={[cardStyles.btnText, { color: 'white' }]}>+</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <TouchableOpacity style={[cardStyles.btn, cardStyles.btnAdd, { paddingHorizontal: 12 }]} onPress={onAdd}>
+              <Ionicons name="add" size={18} color="white" />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={cardStyles.card}>
       {item.imageUrl && (
@@ -357,6 +422,15 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   category: { padding: 20 },
   categoryName: { fontSize: 13, fontWeight: '800', color: '#FF6B35', letterSpacing: 1.5, marginBottom: 12, textTransform: 'uppercase' },
+  dailyMenuHeader: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: '#FF6B35', borderRadius: 12, padding: 14, marginBottom: 12,
+  },
+  dailyMenuTitle: { flex: 1, fontSize: 16, fontWeight: '700', color: 'white' },
+  dailyMenuPriceBadge: {
+    backgroundColor: 'white', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 4,
+  },
+  dailyMenuPrice: { fontSize: 15, fontWeight: '800', color: '#FF6B35' },
   noResults: { alignItems: 'center', paddingTop: 60, gap: 12 },
   noResultsText: { fontSize: 14, color: '#717171' },
   orderBtn: {
@@ -397,6 +471,16 @@ const cardStyles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'flex-start', gap: 12,
     borderBottomWidth: 1, borderBottomColor: '#EBEBEB',
   },
+  dailyCard: {
+    backgroundColor: '#FFF8F5', borderRadius: 10, padding: 14, marginBottom: 8,
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    borderLeftWidth: 3, borderLeftColor: '#FF6B35',
+  },
+  courseBadge: {
+    backgroundColor: '#FF6B35', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3,
+    alignSelf: 'flex-start', marginBottom: 4,
+  },
+  courseBadgeText: { fontSize: 10, fontWeight: '700', color: 'white', textTransform: 'uppercase' },
   image: { width: 72, height: 72, borderRadius: 10, backgroundColor: '#F7F7F7' },
   info: { flex: 1 },
   name: { fontSize: 15, fontWeight: '600', color: '#222222' },

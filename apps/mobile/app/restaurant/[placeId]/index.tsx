@@ -113,6 +113,11 @@ export default function RestaurantScreen() {
       <Stack.Screen
         options={{
           title: place?.name || 'Restaurant',
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 8, padding: 4 }}>
+              <Ionicons name="chevron-back" size={24} color="#222222" />
+            </TouchableOpacity>
+          ),
           headerStyle: {
             backgroundColor: '#FFFFFF',
             elevation: 0,
