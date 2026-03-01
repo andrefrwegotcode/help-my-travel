@@ -116,6 +116,11 @@ export class MenuService {
     };
   }
 
+  async invalidateAllCache() {
+    const result = await this.prisma.menuCache.deleteMany();
+    return { message: `All menu cache cleared (${result.count} entries deleted)` };
+  }
+
   async invalidateCache(placeId: string) {
     await this.prisma.menuCache.deleteMany({ where: { placeId } });
     return { message: 'Menu cache invalidated' };

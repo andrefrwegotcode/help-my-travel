@@ -63,6 +63,14 @@ export class MenuController {
     return this.menuService.getMenu(placeId, lang);
   }
 
+  @Delete('cache')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN')
+  @ApiOperation({ summary: '[Admin] Invalidate ALL menu cache' })
+  async invalidateAllCache() {
+    return this.menuService.invalidateAllCache();
+  }
+
   @Delete('cache/:placeId')
   @UseGuards(RolesGuard)
   @Roles('ADMIN')
