@@ -124,37 +124,17 @@ export class MenuDiscoveryProcessor {
       }
       await job.progress(60);
 
-      // Step 4.5: Try scraping Google Maps page for menu link
-      // The "Menu" section on Google Maps contains a URL not available via API
-      if (!rawText && place.googleMapsUrl) {
-        this.logger.log(`[Job ${job.id}] Step 4.5: Scraping Google Maps for menu link`);
-        const menuLink = await this.placesService.scrapeGoogleMapsMenuLink(place.googleMapsUrl);
-        if (menuLink) {
-          this.logger.log(`[Job ${job.id}] Found menu link from Google Maps: ${menuLink}`);
-          // Try PDF first
-          if (menuLink.toLowerCase().includes('.pdf') || menuLink.includes('drive.google.com')) {
-            let downloadUrl = menuLink;
-            const driveMatch = menuLink.match(/\/d\/([a-zA-Z0-9_-]+)/);
-            if (driveMatch) {
-              downloadUrl = `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
-            }
-            const pdfResult = await this.fetchPdf(downloadUrl);
-            if (pdfResult) {
-              rawText = pdfResult.text;
-              sourceUrl = menuLink;
-              source = 'GOOGLE';
-            }
-          }
-          // Try as website
-          if (!rawText) {
-            const webMenuResult = await this.fetchWebsite(menuLink);
-            if (webMenuResult) {
-              rawText = webMenuResult.text;
-              sourceUrl = menuLink;
-              source = 'GOOGLE';
-              foodImages = webMenuResult.images || [];
-            }
-          }
+      // Step 4.5: Search Google directly for restaurant menu (no CSE needed)
+      // This catches menu PDFs on Google Drive, external sites, etc.
+      if (!rawText) {
+        this.logger.log(`[Job ${job.id}] Step 4.5: Searching Google for "${placeName}" menu`);
+        const searchResult = await this.searchGoogleForMenu(placeName, city);
+        if (searchResult) {
+          rawText = searchResult.text;
+          sourceUrl = searchResult.url;
+          source = 'GOOGLE';
+          foodImages = searchResult.images || [];
+          this.logger.log(`[Job ${job.id}] Found menu via Google search: ${sourceUrl} (${rawText!.length} chars)`);
         }
       }
 
@@ -828,6 +808,117 @@ Return ONLY a valid JSON array, no markdown:
       this.logger.warn(`Google CSE failed: ${err}`);
     }
     return null;
+  }
+
+  /**
+   * Search Google directly for the restaurant menu (no CSE required).
+   * Scrapes Google search results to find menu PDFs, Google Drive links, etc.
+   */
+  private async searchGoogleForMenu(
+    name: string, city: string,
+  ): Promise<{ text: string; url: string; images: string[] } | null> {
+    try {
+      const query = `"${name}" "${city}" menu`;
+      this.logger.log(`Google search: ${query}`);
+
+      const html = await this.httpGet(
+        `https://www.google.com/search?q=${encodeURIComponent(query)}&num=10&hl=en`,
+      );
+      if (!html) return null;
+
+      // Extract URLs from Google search results
+      const urlPattern = /href="\/url\?q=(https?[^&"]+)/g;
+      const urls: string[] = [];
+      let match: RegExpExecArray | null;
+      while ((match = urlPattern.exec(html)) !== null) {
+        const url = decodeURIComponent(match[1]);
+        if (/youtube|facebook|instagram|twitter|tiktok|google\.com/i.test(url)) continue;
+        urls.push(url);
+      }
+
+      // Also try to find direct links (Google sometimes uses direct href)
+      const directPattern = /href="(https?:\/\/(?!www\.google)[^"]*(?:menu|carta|cardapio|drive\.google)[^"]*)"/gi;
+      while ((match = directPattern.exec(html)) !== null) {
+        const url = decodeURIComponent(match[1]);
+        if (!urls.includes(url)) urls.push(url);
+      }
+
+      this.logger.log(`Google search found ${urls.length} candidate URLs`);
+
+      // Try each URL — prioritize Google Drive and PDF links
+      const driveUrls = urls.filter(u => u.includes('drive.google.com'));
+      const pdfUrls = urls.filter(u => u.toLowerCase().includes('.pdf') && !driveUrls.includes(u));
+      const otherUrls = urls.filter(u => !driveUrls.includes(u) && !pdfUrls.includes(u));
+      const orderedUrls = [...driveUrls, ...pdfUrls, ...otherUrls].slice(0, 5);
+
+      for (const url of orderedUrls) {
+        this.logger.log(`Trying search result: ${url}`);
+
+        // Google Drive links → convert to direct download and treat as PDF/image
+        if (url.includes('drive.google.com')) {
+          const driveMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+          if (driveMatch) {
+            const downloadUrl = `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
+            // Try as PDF first
+            const pdfResult = await this.fetchPdf(downloadUrl);
+            if (pdfResult) return { ...pdfResult, images: [] };
+            // Try as image with Gemini Vision OCR
+            if (this.gemini) {
+              const ocrResult = await this.ocrDriveImage(downloadUrl);
+              if (ocrResult) return { text: ocrResult, url, images: [] };
+            }
+          }
+          continue;
+        }
+
+        // PDF links
+        if (url.toLowerCase().includes('.pdf')) {
+          const pdfResult = await this.fetchPdf(url);
+          if (pdfResult) return { ...pdfResult, images: [] };
+          continue;
+        }
+
+        // Regular website
+        const result = await this.fetchWebsite(url);
+        if (result) return result;
+      }
+    } catch (err) {
+      this.logger.warn(`Google search for menu failed: ${err}`);
+    }
+    return null;
+  }
+
+  /**
+   * Try to OCR a Google Drive image (not PDF) using Gemini Vision.
+   */
+  private async ocrDriveImage(downloadUrl: string): Promise<string | null> {
+    if (!this.gemini) return null;
+    try {
+      const res = await axios.get(downloadUrl, {
+        responseType: 'arraybuffer',
+        timeout: 10000,
+        maxContentLength: 15 * 1024 * 1024,
+        maxRedirects: 5,
+      });
+
+      const contentType = res.headers['content-type'] || '';
+      if (!contentType.includes('image')) return null;
+
+      const base64 = Buffer.from(res.data).toString('base64');
+      const model = this.gemini.getGenerativeModel({ model: 'gemini-2.5-flash' });
+      const result = await model.generateContent([
+        'Extract ALL text from this menu image. Return the raw text exactly as written, preserving item names and prices. If this is not a menu, return "NOT_A_MENU".',
+        { inlineData: { mimeType: contentType, data: base64 } },
+      ]);
+
+      const text = result.response.text();
+      if (!text || text.includes('NOT_A_MENU')) return null;
+      this.logger.log(`OCR from Drive image: ${text.length} chars`);
+      return text;
+    } catch (err) {
+      this.logger.warn(`Drive image OCR failed: ${err}`);
+      return null;
+    }
   }
 
   // ──────────────────────────────────────────────
