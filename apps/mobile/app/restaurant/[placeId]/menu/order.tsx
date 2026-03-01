@@ -44,13 +44,26 @@ export default function OrderScreen() {
         placeId,
         placeName: place?.name || 'Restaurant',
         placeLanguage: place?.language || user?.language || 'en',
-        items: items.map((i) => ({ menuItem: i.menuItem, quantity: i.quantity })),
+        items: items.map((i) => ({
+          menuItem: {
+            id: i.menuItem.id,
+            name: i.menuItem.name,
+            nameOriginal: i.menuItem.nameOriginal || i.menuItem.name,
+            description: i.menuItem.description || undefined,
+            price: i.menuItem.price || undefined,
+            priceValue: i.menuItem.priceValue || undefined,
+            currency: i.menuItem.currency || undefined,
+          },
+          quantity: i.quantity,
+        })),
         tableNumber: tableNumber || undefined,
         notes: notes || undefined,
       });
       setOrderText(res.data.orderText);
     } catch (err: any) {
-      Alert.alert(t('common.error'), err?.response?.data?.message || 'Failed to generate order.');
+      const message = err?.response?.data?.message;
+      const details = Array.isArray(message) ? message.join(', ') : message;
+      Alert.alert(t('common.error'), details || 'Failed to generate order.');
     } finally {
       setLoading(false);
     }

@@ -92,6 +92,8 @@
     "processingPhoto": "Processing photo...",
     "qrDetected": "QR code detected! Loading menu...",
     "invalidQr": "QR code does not contain a valid URL",
+    "searchPlaceholder": "Search menu items...",
+    "changeLanguage": "Translate menu to",
     "source": {
       "WEBSITE": "From restaurant website",
       "GOOGLE": "From Google Search",

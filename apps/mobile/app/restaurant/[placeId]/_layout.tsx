@@ -15,7 +15,7 @@ export default function PlaceLayout() {
         headerTitleStyle: { fontWeight: '600', fontSize: 17 },
       }}
     >
-      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="index" />
     </Stack>
   );
 }

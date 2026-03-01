@@ -92,6 +92,8 @@
     "processingPhoto": "Processando foto...",
     "qrDetected": "QR code detectado! Carregando cardápio...",
     "invalidQr": "O QR code não contém uma URL válida",
+    "searchPlaceholder": "Buscar itens do cardápio...",
+    "changeLanguage": "Traduzir cardápio para",
     "source": {
       "WEBSITE": "Do site do restaurante",
       "GOOGLE": "Da busca do Google",

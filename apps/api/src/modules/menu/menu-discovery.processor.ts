@@ -137,25 +137,19 @@ export class MenuDiscoveryProcessor {
         throw new Error(`Could not extract menu items for "${placeName}". The menu format was not recognized.`);
       }
 
-      // Step 6: Assign food images to items (round-robin if fewer images than items)
-      if (foodImages.length > 0) {
-        for (let i = 0; i < items.length; i++) {
-          if (i < foodImages.length) {
-            items[i].imageUrl = foodImages[i];
-          }
+      // Step 6: Don't assign images to individual items unless they came from
+      // a menu-specific container. Generic restaurant photos would be misleading.
+      // Only assign images from food-specific containers on the restaurant website.
+      if (foodImages.length > 0 && foodImages.length <= items.length) {
+        // Only assign if we have a reasonable number of images vs items
+        // (suggests images are actually per-dish, not generic page images)
+        for (let i = 0; i < foodImages.length; i++) {
+          items[i].imageUrl = foodImages[i];
         }
-        this.logger.log(`[Job ${job.id}] Assigned ${Math.min(foodImages.length, items.length)} images to items`);
-      }
-
-      // Also try to get Google Places photos for the restaurant
-      if (place.photos && place.photos.length > 0 && foodImages.length === 0) {
-        const placesApiKey = process.env.GOOGLE_PLACES_API_KEY;
-        if (placesApiKey) {
-          for (let i = 0; i < Math.min(items.length, place.photos.length); i++) {
-            items[i].imageUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${place.photos[i].photoReference}&key=${placesApiKey}`;
-          }
-          this.logger.log(`[Job ${job.id}] Added ${Math.min(items.length, place.photos.length)} Google Places photos`);
-        }
+        this.logger.log(`[Job ${job.id}] Assigned ${foodImages.length} food images to items`);
+      } else if (foodImages.length > items.length) {
+        // More images than items = likely generic photos, skip assignment
+        this.logger.log(`[Job ${job.id}] Skipped image assignment (${foodImages.length} images > ${items.length} items — likely not per-dish)`);
       }
 
       // Step 7: Translate items
@@ -530,28 +524,33 @@ Return ONLY a valid JSON array, no markdown:
     const images: string[] = [];
     const seen = new Set<string>();
 
-    // Look for images in menu areas, or any food-related images
+    // Look for images in menu-specific containers first
     const foodImgPattern = /menu|dish|food|plat|piatt|comida|carta|meal|cucina|gastrono|receta/i;
-    const skipPattern = /logo|icon|avatar|banner|sprite|social|facebook|twitter|instagram|pixel|tracking|ad-|ads-|flag|arrow|btn|button/i;
+    const skipPattern = /logo|icon|avatar|banner|sprite|social|facebook|twitter|instagram|pixel|tracking|ad-|ads-|flag|arrow|btn|button|team|staff|equipo|interior|exterior|header|footer|sidebar|bg-|background|decoration|profile|review|comment|user|certificate|award|badge|partner|sponsor|payment|visa|mastercard|american|maps|map|google/i;
+    const skipExtension = /\.(svg|gif|ico|webp)$/i;
 
-    $('img[src]').each((_, el) => {
+    // First pass: only look inside menu containers
+    const menuContainers = $('[class*="menu"], [id*="menu"], [class*="carta"], [id*="carta"], [class*="dish"], [class*="food"], [class*="plat"]');
+    const searchIn = menuContainers.length > 0 ? menuContainers : $('main, article, .content, #content');
+
+    searchIn.find('img[src]').each((_, el) => {
       const src = $(el).attr('src') || '';
       const alt = $(el).attr('alt') || '';
       const cls = $(el).attr('class') || '';
       const width = parseInt($(el).attr('width') || '0', 10);
       const height = parseInt($(el).attr('height') || '0', 10);
 
-      // Skip tiny images (icons, spacers)
-      if ((width > 0 && width < 80) || (height > 0 && height < 80)) return;
+      // Skip tiny images
+      if ((width > 0 && width < 120) || (height > 0 && height < 120)) return;
       // Skip non-food images
-      if (skipPattern.test(src) || skipPattern.test(cls)) return;
+      if (skipPattern.test(src) || skipPattern.test(cls) || skipPattern.test(alt)) return;
+      if (skipExtension.test(src)) return;
 
-      // Prefer images that look food-related
+      // Must be food-related by name/alt OR be a known-sized food photo
       const isFoodRelated = foodImgPattern.test(src) || foodImgPattern.test(alt) || foodImgPattern.test(cls);
-      // Also accept larger images (likely food photos)
-      const isLarge = (width >= 200 || height >= 200) || (!width && !height);
+      const isExplicitlyLarge = width >= 200 && height >= 150;
 
-      if (isFoodRelated || isLarge) {
+      if (isFoodRelated || isExplicitlyLarge) {
         try {
           const fullUrl = new URL(src, baseUrl).toString();
           if (!seen.has(fullUrl) && fullUrl.startsWith('http')) {
@@ -562,7 +561,7 @@ Return ONLY a valid JSON array, no markdown:
       }
     });
 
-    return images.slice(0, 30); // Cap at 30 images
+    return images.slice(0, 20);
   }
 
   // ──────────────────────────────────────────────
@@ -842,8 +841,8 @@ Return ONLY a valid JSON array, no markdown:
     // Broad multilingual food keywords
     const foodKeywords = /pasta|pizza|paella|ensalad|salad|sopa|soup|carn|meat|pescad|fish|pollo|chicken|ternera|cerdo|pork|marisco|seafood|arroz|rice|filete|burger|sandwich|tarta|cake|flan|helado|ice cream|gambas|langostino|bacalao|bacallà|pulpo|fideuá|fideuà|calamares|croqueta|foie|sorbet|bogavante|vieiras|cangrejo|señoret|solomillo|costillas|entrecot|carpaccio|tartar|risotto|ravioli|gnocchi|bruschetta|hummus|guacamole|burrata|mozzarella|presa|ibéric|secreto|lomo|chuleta|merluza|lubina|dorada|rape|salmón|atún|mejillones|almejas|navajas|percebes|langosta|cigalas|alcachofas|espárrago|coliflor|berenjena|pimiento|patatas|verdura|huevos|tortilla|jamón|queso|pan|vino|cerveza|postre|dessert|dulce|mousse|brownie|crème|profiterole|tiramisú|pannacotta/i;
 
-    // Skip lines that are page titles / section intros
-    const skipPattern = /^(nuestra|descubr|disfrut|bienvenid|visit|reserv|horario|teléfono|dirección|contacto|síguenos|follow|nuestro equipo|about us)/i;
+    // Skip lines that are page titles / section intros / restaurant info
+    const skipPattern = /^(nuestra|descubr|disfrut|bienvenid|visit|reserv|horario|teléfono|dirección|contacto|síguenos|follow|nuestro equipo|about us|nuestros|estamos|abierto|cerrado|lunes|martes|miércoles|jueves|viernes|sábado|domingo|monday|tuesday|wednesday|thursday|friday|saturday|sunday|hours|open|closed|booking|ver más|see more|read more|leer más|email|e-mail|tel|fax|segunda|terça|quarta|quinta|sexta|contato|nosso|nossa|bem-vindo|descubra|aproveite|visite|endereço|©|copyright|todos los derechos|all rights|privacy|política|terms|condiciones)/i;
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
@@ -906,8 +905,33 @@ Return ONLY a valid JSON array, no markdown:
       lower.includes('terms of service') || lower.includes('sign in') ||
       lower.includes('log in') || lower.includes('subscribe') ||
       lower.includes('newsletter') || lower.includes('follow us') ||
+      lower.includes('whatsapp') || lower.includes('instagram') ||
+      lower.includes('facebook') || lower.includes('twitter') ||
+      lower.includes('tripadvisor') || lower.includes('google maps') ||
+      lower.includes('horario') || lower.includes('horário') || lower.includes('opening hours') ||
+      lower.includes('reserva') || lower.includes('booking') || lower.includes('reserve') ||
+      lower.includes('teléfono') || lower.includes('telefone') || lower.includes('phone') ||
+      lower.includes('dirección') || lower.includes('endereço') || lower.includes('address') ||
+      lower.includes('contacto') || lower.includes('contato') || lower.includes('contact us') ||
+      lower.includes('síguenos') || lower.includes('siga-nos') ||
+      lower.includes('about us') || lower.includes('sobre nosotros') || lower.includes('sobre nós') ||
+      lower.includes('wifi') || lower.includes('parking') || lower.includes('aparcamiento') ||
+      lower.includes('allergen') || lower.includes('alérgeno') || lower.includes('alergénio') ||
+      lower.includes('iva inclu') || lower.includes('tax inclu') || lower.includes('impuesto') ||
+      lower.includes('servicio incluido') || lower.includes('service charge') ||
+      lower.includes('lunes') || lower.includes('martes') || lower.includes('miércoles') ||
+      lower.includes('jueves') || lower.includes('viernes') || lower.includes('sábado') || lower.includes('domingo') ||
+      lower.includes('monday') || lower.includes('tuesday') || lower.includes('wednesday') ||
+      lower.includes('thursday') || lower.includes('friday') || lower.includes('saturday') || lower.includes('sunday') ||
+      lower.includes('segunda') || lower.includes('terça') || lower.includes('quarta') ||
+      lower.includes('quinta') || lower.includes('sexta') ||
       /^\d+$/.test(line) || // just a number
-      /^https?:\/\//.test(line) // just a URL
+      /^\d+([.,]\d{1,2})?\s*(€|£|\$|R\$|CHF)$/.test(line) || // just a price "12.50 €"
+      /^(€|£|\$|R\$|CHF)\s*\d+([.,]\d{1,2})?$/.test(line) || // just a price "€ 12.50"
+      /^https?:\/\//.test(line) || // just a URL
+      /^[\d\s()+\-]+$/.test(line) || // just a phone number
+      /^\d{1,2}[:/h]\d{2}\s*[-–a]\s*\d{1,2}[:/h]\d{2}/.test(line) || // hours like "11:00 - 23:00"
+      /^(tel|fax|email|e-mail|web|www)\b/i.test(line)
     );
   }
 
@@ -943,14 +967,18 @@ Return ONLY a valid JSON array, no markdown:
         description: item.description,
       }));
 
-      const prompt = `Translate these restaurant menu items to ${targetLanguage}.
-For regional/cultural dishes, add a brief description (max 15 words) explaining the dish (ingredients, cooking style, or origin).
-For common dishes, just translate the name.
+      const prompt = `You are a restaurant menu translator. Translate these menu items to ${targetLanguage}.
+
+IMPORTANT RULES:
+1. For regional/cultural dishes, add a brief description (max 15 words) explaining the dish.
+2. For common dishes, just translate the name.
+3. If any item is NOT a real food/drink item (e.g. a price, phone number, address, schedule, restaurant info, website, decoration text), set its name to "SKIP" so it can be filtered out.
+4. Translate category names too.
 
 Input: ${JSON.stringify(inputItems)}
 
 Return ONLY a valid JSON array, no markdown:
-[{"name": "translated name", "description": "brief explanation in ${targetLanguage} or null", "category": "translated category or null"}]`;
+[{"name": "translated name or SKIP", "description": "brief explanation in ${targetLanguage} or null", "category": "translated category or null"}]`;
 
       const result = await model.generateContent(prompt);
       const responseText = result.response.text();
@@ -981,8 +1009,13 @@ Return ONLY a valid JSON array, no markdown:
       }
     }
 
-    this.logger.log(`Gemini translated ${allResults.length} items to ${targetLanguage}`);
-    return allResults;
+    // Filter out items marked as SKIP by Gemini (non-food content)
+    const filtered = allResults.filter(item => item.name !== 'SKIP' && item.nameOriginal !== 'SKIP');
+    if (filtered.length < allResults.length) {
+      this.logger.log(`Gemini filtered out ${allResults.length - filtered.length} non-food items`);
+    }
+    this.logger.log(`Gemini translated ${filtered.length} items to ${targetLanguage}`);
+    return filtered;
   }
 
   private async translateWithGoogleTranslate(items: RawMenuItem[], targetLanguage: string): Promise<any[]> {

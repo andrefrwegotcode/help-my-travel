@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   ActivityIndicator, Linking, Modal, TextInput, Alert,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useLocalSearchParams, router, Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -255,7 +256,10 @@ export default function RestaurantScreen() {
 
       {/* Review Modal */}
       <Modal visible={showReviewModal} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>{t('restaurant.addReview')}</Text>
 
@@ -295,7 +299,7 @@ export default function RestaurantScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </>
   );

@@ -143,7 +143,7 @@ export default function MapScreen() {
               title={place.name}
               description={place.address}
               pinColor="#FF6B35"
-              onCalloutPress={() => router.push(`/restaurant/${place.placeId}`)}
+              onPress={() => router.push(`/restaurant/${place.placeId}`)}
             />
           ))}
 
