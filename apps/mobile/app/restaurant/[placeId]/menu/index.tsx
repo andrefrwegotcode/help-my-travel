@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, FlatList,
+  ActivityIndicator, FlatList, Image,
 } from 'react-native';
 import { useLocalSearchParams, router, Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -184,6 +184,9 @@ function MenuItemCard({
   const { t } = useTranslation();
   return (
     <View style={cardStyles.card}>
+      {item.imageUrl && (
+        <Image source={{ uri: item.imageUrl }} style={cardStyles.image} />
+      )}
       <View style={cardStyles.info}>
         <Text style={cardStyles.name}>{item.name}</Text>
         {item.nameOriginal !== item.name && (
@@ -257,6 +260,7 @@ const cardStyles = StyleSheet.create({
     backgroundColor: 'white', borderRadius: 14, padding: 14, marginBottom: 8,
     flexDirection: 'row', alignItems: 'flex-start', gap: 12,
   },
+  image: { width: 60, height: 60, borderRadius: 8, backgroundColor: '#f0f0f0' },
   info: { flex: 1 },
   name: { fontSize: 15, fontWeight: '700', color: '#1A1A2E' },
   original: { fontSize: 12, color: '#888', marginTop: 2 },

@@ -87,6 +87,35 @@ export class MenuService {
     return { status: state, progress };
   }
 
+  async scanUrl(url: string, placeId: string, language: string) {
+    const job = await this.menuQueue.add(
+      'scan-url',
+      { placeId, language, url },
+      { removeOnComplete: 50, removeOnFail: 20, attempts: 1 },
+    );
+    return {
+      jobId: job.id?.toString(),
+      status: 'pending',
+      message: 'QR code URL scan started. Poll /menu/status/:jobId for updates.',
+    };
+  }
+
+  async scanPhoto(file: Express.Multer.File, placeId: string, language: string) {
+    const imageBase64 = file.buffer.toString('base64');
+    const imageMimeType = file.mimetype;
+
+    const job = await this.menuQueue.add(
+      'scan-photo',
+      { placeId, language, imageBase64, imageMimeType },
+      { removeOnComplete: 50, removeOnFail: 20, attempts: 1 },
+    );
+    return {
+      jobId: job.id?.toString(),
+      status: 'pending',
+      message: 'Photo OCR scan started. Poll /menu/status/:jobId for updates.',
+    };
+  }
+
   async invalidateCache(placeId: string) {
     await this.prisma.menuCache.deleteMany({ where: { placeId } });
     return { message: 'Menu cache invalidated' };

@@ -81,6 +81,24 @@ export default function RestaurantScreen() {
           <Ionicons name="chevron-forward" size={18} color="white" />
         </TouchableOpacity>
 
+        {/* QR Code + Photo Menu buttons */}
+        <View style={styles.scanRow}>
+          <TouchableOpacity
+            style={styles.scanBtn}
+            onPress={() => router.push(`/restaurant/${placeId}/scan-qr`)}
+          >
+            <Ionicons name="qr-code-outline" size={20} color="#FF6B35" />
+            <Text style={styles.scanBtnText}>{t('restaurant.scanQr')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.scanBtn}
+            onPress={() => router.push(`/restaurant/${placeId}/scan-photo`)}
+          >
+            <Ionicons name="camera-outline" size={20} color="#FF6B35" />
+            <Text style={styles.scanBtnText}>{t('restaurant.scanPhoto')}</Text>
+          </TouchableOpacity>
+        </View>
+
         <ScrollView style={styles.content}>
           <View style={styles.section}>
             {place?.website && (
@@ -117,6 +135,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FF6B35', margin: 16, borderRadius: 16, padding: 16,
   },
   menuBtnText: { flex: 1, color: 'white', fontSize: 17, fontWeight: '700', marginLeft: 8 },
+  scanRow: { flexDirection: 'row', gap: 10, marginHorizontal: 16, marginBottom: 12 },
+  scanBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: 'white', borderWidth: 1.5, borderColor: '#FF6B35', borderRadius: 12, padding: 12,
+  },
+  scanBtnText: { color: '#FF6B35', fontWeight: '600', fontSize: 14 },
   tabs: { flexDirection: 'row', backgroundColor: 'white', borderBottomWidth: 1, borderColor: '#F0F0F0' },
   tab: { flex: 1, paddingVertical: 14, alignItems: 'center' },
   tabActive: { borderBottomWidth: 2.5, borderBottomColor: '#FF6B35' },

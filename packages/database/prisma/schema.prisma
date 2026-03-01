@@ -27,6 +27,8 @@ enum MenuSource {
   WEBSITE
   GOOGLE
   OTHER
+  QR_CODE
+  PHOTO_OCR
 }
 
 // ====================

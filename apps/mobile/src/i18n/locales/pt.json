@@ -63,7 +63,9 @@
     "loadingMenu": "Buscando cardápio...",
     "menuFrom": "Cardápio de",
     "addReview": "Escrever Avaliação",
-    "uploadPhotos": "Enviar Fotos"
+    "uploadPhotos": "Enviar Fotos",
+    "scanQr": "Escanear QR Code",
+    "scanPhoto": "Foto do Cardápio"
   },
   "menu": {
     "title": "Cardápio",
@@ -75,10 +77,20 @@
     "notFound": "Cardápio Indisponível",
     "empty": "Sem Itens no Cardápio",
     "emptyDescription": "O cardápio foi encontrado mas não contém itens.",
+    "scanning": "Escaneando...",
+    "pointCamera": "Aponte a câmera para o QR code",
+    "takePhoto": "Tirar Foto",
+    "chooseFromGallery": "Escolher da Galeria",
+    "photoDescription": "Tire uma foto do cardápio físico ou escolha da galeria",
+    "processingPhoto": "Processando foto...",
+    "qrDetected": "QR code detectado! Carregando cardápio...",
+    "invalidQr": "O QR code não contém uma URL válida",
     "source": {
       "WEBSITE": "Do site do restaurante",
       "GOOGLE": "Da busca do Google",
-      "OTHER": "De fonte terceira"
+      "OTHER": "De fonte terceira",
+      "QR_CODE": "Via QR code",
+      "PHOTO_OCR": "Via foto do cardápio"
     }
   },
   "order": {

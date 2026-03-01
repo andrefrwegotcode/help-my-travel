@@ -4,6 +4,7 @@ import { Job } from 'bull';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { v2 } from '@google-cloud/translate';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { PrismaService } from '../../config/prisma.service';
 import { PlacesService } from '../places/places.service';
 import { MENU_CACHE_TTL_HOURS } from '@helpmytravel/shared';
@@ -13,6 +14,11 @@ export const MENU_QUEUE = 'menu-discovery';
 export interface MenuDiscoveryJobData {
   placeId: string;
   language: string;
+  // For scan-url jobs
+  url?: string;
+  // For scan-photo jobs
+  imageBase64?: string;
+  imageMimeType?: string;
 }
 
 interface RawMenuItem {
@@ -30,6 +36,7 @@ const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
 export class MenuDiscoveryProcessor {
   private readonly logger = new Logger(MenuDiscoveryProcessor.name);
   private readonly translateClient: v2.Translate;
+  private readonly gemini: GoogleGenerativeAI | null;
 
   constructor(
     private prisma: PrismaService,
@@ -38,6 +45,8 @@ export class MenuDiscoveryProcessor {
     this.translateClient = new v2.Translate({
       key: process.env.GOOGLE_TRANSLATE_API_KEY,
     });
+    const geminiKey = process.env.GEMINI_API_KEY;
+    this.gemini = geminiKey ? new GoogleGenerativeAI(geminiKey) : null;
   }
 
   @Process('discover')
@@ -166,6 +175,151 @@ export class MenuDiscoveryProcessor {
       return { success: true, itemCount: translatedItems.length, source };
     } catch (err) {
       this.logger.error(`[Job ${job.id}] Failed: ${err}`);
+      throw err;
+    }
+  }
+
+  // ──────────────────────────────────────────────
+  // Job: Scan URL (from QR code)
+  // ──────────────────────────────────────────────
+  @Process('scan-url')
+  async handleScanUrl(job: Job<MenuDiscoveryJobData>) {
+    const { placeId, language, url } = job.data;
+    this.logger.log(`[Job ${job.id}] Scan URL for ${placeId}: ${url}`);
+
+    if (!url) throw new Error('No URL provided');
+
+    try {
+      await job.progress(10);
+
+      // Fetch the URL directly (HTML or PDF)
+      let rawText: string | null = null;
+      let foodImages: string[] = [];
+
+      if (url.toLowerCase().endsWith('.pdf')) {
+        const pdfResult = await this.fetchPdf(url);
+        if (pdfResult) rawText = pdfResult.text;
+      } else {
+        const webResult = await this.fetchWebsite(url);
+        if (webResult) {
+          rawText = webResult.text;
+          foodImages = webResult.images || [];
+        }
+      }
+      await job.progress(40);
+
+      if (!rawText) throw new Error(`Could not extract content from URL: ${url}`);
+
+      // Parse menu items
+      const items = this.parseMenuItems(rawText);
+      this.logger.log(`[Job ${job.id}] Parsed ${items.length} items from QR URL`);
+      if (items.length === 0) throw new Error('No menu items found at the QR code URL.');
+      await job.progress(55);
+
+      // Assign images
+      if (foodImages.length > 0) {
+        for (let i = 0; i < Math.min(items.length, foodImages.length); i++) {
+          items[i].imageUrl = foodImages[i];
+        }
+      }
+
+      // Translate with Gemini
+      const translatedItems = await this.translateItems(items, language);
+      await job.progress(90);
+
+      // Cache
+      const expiresAt = new Date(Date.now() + MENU_CACHE_TTL_HOURS * 60 * 60 * 1000);
+      await this.prisma.menuCache.upsert({
+        where: { placeId_language: { placeId, language } },
+        create: { placeId, language, rawText, items: translatedItems as any, source: 'QR_CODE', sourceUrl: url, expiresAt },
+        update: { rawText, items: translatedItems as any, source: 'QR_CODE', sourceUrl: url, expiresAt, fetchedAt: new Date() },
+      });
+
+      await job.progress(100);
+      return { success: true, itemCount: translatedItems.length, source: 'QR_CODE' };
+    } catch (err) {
+      this.logger.error(`[Job ${job.id}] Scan URL failed: ${err}`);
+      throw err;
+    }
+  }
+
+  // ──────────────────────────────────────────────
+  // Job: Scan Photo (OCR via Gemini Vision)
+  // ──────────────────────────────────────────────
+  @Process('scan-photo')
+  async handleScanPhoto(job: Job<MenuDiscoveryJobData>) {
+    const { placeId, language, imageBase64, imageMimeType } = job.data;
+    this.logger.log(`[Job ${job.id}] Scan Photo for ${placeId}`);
+
+    if (!imageBase64) throw new Error('No image provided');
+    if (!this.gemini) throw new Error('Gemini API key not configured. Set GEMINI_API_KEY.');
+
+    try {
+      await job.progress(10);
+
+      // Use Gemini Vision for OCR + translation in one step
+      const model = this.gemini.getGenerativeModel({ model: 'gemini-2.0-flash' });
+
+      const prompt = `You are analyzing a photo of a restaurant menu. Extract ALL menu items you can see.
+For each item, provide:
+- name: the dish name exactly as written
+- price: the price if visible (e.g., "12.50 €"), or null
+- category: the section/category it belongs to (e.g., "Starters", "Main Courses"), or null
+- description: a brief description of the dish (max 15 words) translated to ${language}
+
+Also translate the dish name to ${language}.
+
+Return ONLY a valid JSON array, no markdown:
+[{"name": "translated name", "nameOriginal": "original name", "description": "brief description in ${language}", "price": "12.50 €", "category": "Category"}]`;
+
+      const result = await model.generateContent([
+        prompt,
+        { inlineData: { mimeType: imageMimeType || 'image/jpeg', data: imageBase64 } },
+      ]);
+      await job.progress(60);
+
+      const responseText = result.response.text();
+      this.logger.log(`[Job ${job.id}] Gemini OCR response length: ${responseText.length}`);
+
+      // Parse JSON from response
+      const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) throw new Error('Gemini did not return valid menu items from photo.');
+
+      const parsedItems = JSON.parse(jsonMatch[0]);
+      if (!Array.isArray(parsedItems) || parsedItems.length === 0) {
+        throw new Error('No menu items detected in the photo.');
+      }
+
+      const translatedItems = parsedItems.map((item: any, idx: number) => ({
+        id: `item-${idx}`,
+        name: item.name || item.nameOriginal || 'Unknown',
+        nameOriginal: item.nameOriginal || item.name || 'Unknown',
+        description: item.description || null,
+        descriptionOriginal: null,
+        ingredients: null,
+        price: item.price || null,
+        priceValue: item.price ? parseFloat(String(item.price).replace(/[^0-9.,]/g, '').replace(',', '.')) || null : null,
+        currency: item.price ? this.detectCurrency(String(item.price)) : null,
+        category: item.category || null,
+        imageUrl: null,
+      }));
+      await job.progress(90);
+
+      this.logger.log(`[Job ${job.id}] OCR extracted ${translatedItems.length} items`);
+
+      // Cache
+      const rawText = parsedItems.map((i: any) => `${i.nameOriginal || i.name} ${i.price || ''}`).join('\n');
+      const expiresAt = new Date(Date.now() + MENU_CACHE_TTL_HOURS * 60 * 60 * 1000);
+      await this.prisma.menuCache.upsert({
+        where: { placeId_language: { placeId, language } },
+        create: { placeId, language, rawText, items: translatedItems as any, source: 'PHOTO_OCR', sourceUrl: null, expiresAt },
+        update: { rawText, items: translatedItems as any, source: 'PHOTO_OCR', sourceUrl: null, expiresAt, fetchedAt: new Date() },
+      });
+
+      await job.progress(100);
+      return { success: true, itemCount: translatedItems.length, source: 'PHOTO_OCR' };
+    } catch (err) {
+      this.logger.error(`[Job ${job.id}] Scan Photo failed: ${err}`);
       throw err;
     }
   }
@@ -758,11 +912,80 @@ export class MenuDiscoveryProcessor {
   }
 
   // ──────────────────────────────────────────────
-  // Translation
+  // Translation (Gemini with context → Google Translate fallback)
   // ──────────────────────────────────────────────
   private async translateItems(items: RawMenuItem[], targetLanguage: string): Promise<any[]> {
     if (items.length === 0) return [];
 
+    // Try Gemini first for contextual translation
+    if (this.gemini) {
+      try {
+        return await this.translateWithGemini(items, targetLanguage);
+      } catch (err) {
+        this.logger.warn(`Gemini translation failed, falling back to Google Translate: ${err}`);
+      }
+    }
+
+    // Fallback: Google Translate (literal)
+    return this.translateWithGoogleTranslate(items, targetLanguage);
+  }
+
+  private async translateWithGemini(items: RawMenuItem[], targetLanguage: string): Promise<any[]> {
+    const model = this.gemini!.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const allResults: any[] = [];
+    const batchSize = 50;
+
+    for (let i = 0; i < items.length; i += batchSize) {
+      const batch = items.slice(i, i + batchSize);
+      const inputItems = batch.map(item => ({
+        name: item.name,
+        category: item.category,
+        description: item.description,
+      }));
+
+      const prompt = `Translate these restaurant menu items to ${targetLanguage}.
+For regional/cultural dishes, add a brief description (max 15 words) explaining the dish (ingredients, cooking style, or origin).
+For common dishes, just translate the name.
+
+Input: ${JSON.stringify(inputItems)}
+
+Return ONLY a valid JSON array, no markdown:
+[{"name": "translated name", "description": "brief explanation in ${targetLanguage} or null", "category": "translated category or null"}]`;
+
+      const result = await model.generateContent(prompt);
+      const responseText = result.response.text();
+      const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        for (let j = 0; j < batch.length; j++) {
+          const original = batch[j];
+          const translated = parsed[j] || {};
+          allResults.push({
+            id: `item-${i + j}`,
+            name: translated.name || original.name,
+            nameOriginal: original.name,
+            description: translated.description || original.description,
+            descriptionOriginal: original.description,
+            ingredients: null,
+            price: original.price,
+            priceValue: original.price ? parseFloat(original.price.replace(/[^0-9.,]/g, '').replace(',', '.')) || null : null,
+            currency: original.price ? this.detectCurrency(original.price) : null,
+            category: translated.category || original.category,
+            imageUrl: original.imageUrl || null,
+          });
+        }
+      } else {
+        // If Gemini didn't return valid JSON, format originals for this batch
+        batch.forEach((item, j) => allResults.push({ ...this.formatSingleItem(item, i + j) }));
+      }
+    }
+
+    this.logger.log(`Gemini translated ${allResults.length} items to ${targetLanguage}`);
+    return allResults;
+  }
+
+  private async translateWithGoogleTranslate(items: RawMenuItem[], targetLanguage: string): Promise<any[]> {
     const textsToTranslate = items.flatMap(item =>
       [item.name, item.description, item.category].filter(Boolean),
     ) as string[];
@@ -790,9 +1013,25 @@ export class MenuDiscoveryProcessor {
         imageUrl: item.imageUrl || null,
       }));
     } catch (err) {
-      this.logger.warn('Translation failed, returning originals', err);
+      this.logger.warn('Google Translate failed, returning originals', err);
       return this.formatItems(items);
     }
+  }
+
+  private formatSingleItem(item: RawMenuItem, idx: number): any {
+    return {
+      id: `item-${idx}`,
+      name: item.name,
+      nameOriginal: item.name,
+      description: item.description,
+      descriptionOriginal: item.description,
+      ingredients: null,
+      price: item.price,
+      priceValue: item.price ? parseFloat(item.price.replace(/[^0-9.,]/g, '').replace(',', '.')) || null : null,
+      currency: item.price ? this.detectCurrency(item.price) : null,
+      category: item.category,
+      imageUrl: item.imageUrl || null,
+    };
   }
 
   private formatItems(items: RawMenuItem[]): any[] {

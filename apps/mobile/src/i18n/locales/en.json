@@ -63,7 +63,9 @@
     "loadingMenu": "Discovering menu...",
     "menuFrom": "Menu from",
     "addReview": "Write a Review",
-    "uploadPhotos": "Upload Photos"
+    "uploadPhotos": "Upload Photos",
+    "scanQr": "Scan QR Code",
+    "scanPhoto": "Photo Menu"
   },
   "menu": {
     "title": "Menu",
@@ -75,10 +77,20 @@
     "notFound": "Menu Not Available",
     "empty": "No Menu Items",
     "emptyDescription": "The menu was found but contains no items.",
+    "scanning": "Scanning...",
+    "pointCamera": "Point your camera at the QR code",
+    "takePhoto": "Take Photo",
+    "chooseFromGallery": "Choose from Gallery",
+    "photoDescription": "Take a photo of the physical menu or choose from gallery",
+    "processingPhoto": "Processing photo...",
+    "qrDetected": "QR code detected! Loading menu...",
+    "invalidQr": "QR code does not contain a valid URL",
     "source": {
       "WEBSITE": "From restaurant website",
       "GOOGLE": "From Google Search",
-      "OTHER": "From third-party source"
+      "OTHER": "From third-party source",
+      "QR_CODE": "From QR code scan",
+      "PHOTO_OCR": "From photo scan"
     }
   },
   "order": {
