@@ -8,6 +8,8 @@ export default function RestaurantLayout() {
         headerTintColor: 'white',
         headerTitleStyle: { fontWeight: '700' },
       }}
-    />
+    >
+      <Stack.Screen name="[placeId]" options={{ title: 'Restaurant' }} />
+    </Stack>
   );
 }
